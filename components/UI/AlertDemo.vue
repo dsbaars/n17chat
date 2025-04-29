@@ -42,7 +42,7 @@ const addRandomAlert = () => {
     <h2 class="text-2xl font-bold mb-4">Alert Component Demo</h2>
     
     <div class="space-y-2">
-      <button @click="addRandomAlert" class="btn btn-primary">Add Random Alert</button>
+      <button class="btn btn-primary" @click="addRandomAlert">Add Random Alert</button>
       
       <h3 class="text-xl font-semibold mt-6">Static Alerts</h3>
       <Alert 
@@ -66,14 +66,15 @@ const addRandomAlert = () => {
         :duration="autoCloseAlert.duration"
         @close="autoCloseAlert = null"
       />
-      <button v-if="!autoCloseAlert" @click="autoCloseAlert = {
+      <button
+v-if="!autoCloseAlert" class="btn btn-outline" @click="autoCloseAlert = {
         type: 'info',
         title: 'Auto Close',
         message: 'This alert will close automatically after 5 seconds',
         closable: true,
         autoClose: true,
         duration: 5000
-      }" class="btn btn-outline">
+      }">
         Show Auto-close Alert Again
       </button>
     </div>

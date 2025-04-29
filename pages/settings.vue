@@ -107,7 +107,7 @@ async function fetchRelayInfo() {
             <span class="badge badge-primary">{{ connectedRelays.length }}</span>
           </h2>
           
-          <div class="divider"></div>
+          <div class="divider"/>
           
           <ul class="space-y-2">
             <li v-for="relay in connectedRelays" :key="relay" class="flex items-center justify-between p-2 bg-base-100 rounded-lg">
@@ -136,7 +136,7 @@ async function fetchRelayInfo() {
           </h2>
           <p class="text-sm opacity-70">Relays where you read events</p>
           
-          <div class="divider"></div>
+          <div class="divider"/>
           
           <ul class="space-y-2">
             <li v-for="relay in readRelays" :key="relay" class="flex items-center justify-between p-2 bg-base-100 rounded-lg">
@@ -177,7 +177,7 @@ async function fetchRelayInfo() {
           </h2>
           <p class="text-sm opacity-70">Relays where you publish events</p>
           
-          <div class="divider"></div>
+          <div class="divider"/>
           
           <ul class="space-y-2">
             <li v-for="relay in writeRelays" :key="relay" class="flex items-center justify-between p-2 bg-base-100 rounded-lg">
@@ -218,7 +218,7 @@ async function fetchRelayInfo() {
           </h2>
           <p class="text-sm opacity-70">Relays used for direct messages</p>
           
-          <div class="divider"></div>
+          <div class="divider"/>
           
           <ul class="space-y-2">
             <li v-for="relay in dmRelays" :key="relay" class="flex items-center justify-between p-2 bg-base-100 rounded-lg">

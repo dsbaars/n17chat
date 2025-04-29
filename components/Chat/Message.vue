@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useNostrStore } from '~/stores/nostr'
 
-const props = defineProps({
+defineProps({
   message: {
     type: Object,
     required: true
   }
 })
+
 
 const nostrStore = useNostrStore()
 
@@ -37,8 +38,8 @@ const isCurrentUser = (message) => {
 <template>
   <div class="chat" :class="isCurrentUser(message) ? 'chat-end' : 'chat-start'">
     <div class="chat-image avatar">
-      <div class="w-10 rounded-full" v-if="nostrStore.getContact(message.pubkey)?.picture">
-        <img :src="nostrStore.getContact(message.pubkey)?.picture" />
+      <div v-if="nostrStore.getContact(message.pubkey)?.picture" class="w-10 rounded-full">
+        <img :src="nostrStore.getContact(message.pubkey)?.picture" >
       </div>
     </div>
     <div class="chat-bubble" :class="isCurrentUser(message) ? 'chat-bubble-primary' : 'chat-bubble-accent'">

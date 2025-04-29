@@ -1,14 +1,8 @@
 <script setup lang="ts">
-import { useNostrStore } from '~/stores/nostr'
-import Alert from '~/components/UI/Alert.vue'
-
 // Layout definition
 definePageMeta({
   layout: 'chat'
 })
-
-const nostrStore = useNostrStore()
-
 
 </script>
 

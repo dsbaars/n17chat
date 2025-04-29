@@ -10,9 +10,11 @@ export interface Contact {
   pubkey: string
   name?: string
   picture?: string
+  profile?: any
   lastMessage?: string
   lastMessageTime?: Date
   unreadCount?: number
+  hidden?: boolean
 }
 
 export interface Message {
@@ -22,6 +24,7 @@ export interface Message {
   created_at: number
   tags: string[][]
   sig: string
+  isSent?: boolean
 }
 
 export enum NostrKind {

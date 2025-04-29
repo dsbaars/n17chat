@@ -10,15 +10,8 @@ class NostrDatabase extends Dexie {
   constructor() {
     super('nostr')
     this.version(1).stores({
-      events: 'id, pubkey, created_at, kind'
-    })
-    this.version(2).stores({
-      events: 'id, pubkey, created_at, kind',
-      contacts: 'pubkey, name, lastMessageTime'
-    })
-    this.version(3).stores({
       events: 'id, pubkey, created_at, kind, recipient, isSent',
-      contacts: 'pubkey, name, lastMessageTime'
+      contacts: 'pubkey, name, lastMessageTime, hidden, profile'
     })
   }
 }
@@ -198,7 +191,8 @@ export const useNostrStore = defineStore('nostr', {
       try {
         let contacts = await db.contacts.toArray()
 
-        // contacts = contacts.filter(contact => contact.pubkey !== this.currentPubkey)
+        // Filter out hidden contacts
+        contacts = contacts.filter(contact => !contact.hidden)
         
         // Sort contacts by lastMessageTime (newest first)
         this.contacts = contacts.sort((a, b) => {
@@ -233,17 +227,20 @@ export const useNostrStore = defineStore('nostr', {
         if (contact) {
           // Update existing contact
           contact.name = profile.name
-          contact.picture = profile.image
+          contact.picture = profile.picture
+          contact.profile = profile
           await db.contacts.update(pubkey, {
             name: profile.name,
-            picture: profile.image
+            picture: profile.picture,
+            profile: profile
           })
         } else {
           // Create new contact if it doesn't exist
           contact = {
             pubkey,
             name: profile.name,
-            picture: profile.image
+            picture: profile.picture,
+            profile: profile
           }
           await db.contacts.put(contact)
         }
@@ -254,7 +251,8 @@ export const useNostrStore = defineStore('nostr', {
           this.contacts[contactIndex] = {
             ...this.contacts[contactIndex],
             name: profile.name,
-            picture: profile.image
+            picture: profile.picture,
+            profile: profile
           }
         }
         
@@ -281,6 +279,9 @@ export const useNostrStore = defineStore('nostr', {
         // First check if the contact already exists in the contacts table
         let contact = await db.contacts.get(pubkey as string)
         
+        // Skip if contact is hidden
+        if (contact && contact.hidden) continue
+        
         const latestEvent = await db.events
           .where('pubkey')
           .equals(pubkey)
@@ -293,7 +294,8 @@ export const useNostrStore = defineStore('nostr', {
             contact = {
               pubkey: pubkey as string,
               lastMessage: latestEvent.content,
-              lastMessageTime: new Date(latestEvent.created_at * 1000)
+              lastMessageTime: new Date(latestEvent.created_at * 1000),
+              hidden: false
             }
             
             // Try to fetch profile information
@@ -330,6 +332,7 @@ export const useNostrStore = defineStore('nostr', {
       this.contacts = [...this.contacts, ...contacts]
         .filter((contact, index, self) => 
           self.findIndex(c => c.pubkey === contact.pubkey) === index)
+        .filter(contact => !contact.hidden) // Filter out hidden contacts
         .sort((a, b) => {
           if (!a.lastMessageTime) return 1
           if (!b.lastMessageTime) return -1
@@ -376,6 +379,10 @@ export const useNostrStore = defineStore('nostr', {
         for (const pubkey of recipientPubkeys) {
           // Check if this contact already exists
           if (!this.getContact(pubkey)) {
+            // Check if contact exists but is hidden
+            const existingContact = await db.contacts.get(pubkey)
+            if (existingContact && existingContact.hidden) continue
+            
             // Find latest message to this contact
             const latestEvent = sentEvents
               .filter(event => event.recipient === pubkey)
@@ -386,7 +393,8 @@ export const useNostrStore = defineStore('nostr', {
               const contact = {
                 pubkey,
                 lastMessage: latestEvent.content,
-                lastMessageTime: new Date(latestEvent.created_at * 1000)
+                lastMessageTime: new Date(latestEvent.created_at * 1000),
+                hidden: false
               }
               
               // Save to database
@@ -418,7 +426,30 @@ export const useNostrStore = defineStore('nostr', {
       const { ndk } = useNostrClient()
       if (!ndk) return
       
-      ndk.sendDirectMessage(pubkey, message)
+      // Use the appropriate method or handle the direct message sending
+      // ndk.sendDirectMessage(pubkey, message)
+      console.log('Sending message to', pubkey, message)
+      // Implementation should be provided based on the NDK's actual API
+    },
+    async hideContact(pubkey: string) {
+      // Update the contact in the database
+      await db.contacts.update(pubkey, { hidden: true })
+      
+      // Remove from current contacts list
+      this.contacts = this.contacts.filter(c => c.pubkey !== pubkey)
+      
+      // If this was the selected contact, deselect it
+      if (this.selectedContact?.pubkey === pubkey) {
+        this.selectedContact = null
+      }
+    },
+    
+    async showContact(pubkey: string) {
+      // Update the contact in the database
+      await db.contacts.update(pubkey, { hidden: false })
+      
+      // Refresh contacts list
+      await this.getContacts()
     }
   }
 

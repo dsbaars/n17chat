@@ -18,7 +18,7 @@ const size = props.size
 <template>
   <div class="placeholder">
     <div v-if="contact.picture" class="avatar" :class="size">
-      <img :src="contact.picture" class="rounded-full" :class="size" />
+      <img :src="contact.picture" class="rounded-full" :class="size" >
     </div>
     <div v-else class="bg-neutral text-neutral-content rounded-full flex items-center justify-center" :class="size">
       <span>{{ contact.name?.charAt(0) || contact.pubkey.charAt(0) }}</span>

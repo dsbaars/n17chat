@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useNostrStore } from '~/stores/nostr'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/solid'
 import { ref, computed, onMounted } from 'vue'
 import ContactPicture from '~/components/Chat/ContactPicture.vue'
 
@@ -46,6 +47,12 @@ const shortPubkey = (pubkey) => {
 const selectContact = (contact) => {
   nostrStore.selectContact(contact)
 }
+
+// Hide a contact from the sidebar
+const hideContact = (event, contact) => {
+  event.stopPropagation() // Prevent contact selection when clicking the hide button
+  nostrStore.hideContact(contact.pubkey)
+}
 </script>
 
 <template>
@@ -55,7 +62,7 @@ const selectContact = (contact) => {
         <div class="form-control grow">
           <label class="input">
             <MagnifyingGlassIcon class="w-5 h-5" />
-            <input v-model="searchTerm" type="text" placeholder="Search" class="grow" />
+            <input v-model="searchTerm" type="text" placeholder="Search" class="grow" >
           </label>
         </div>
         <button class="btn btn-circle btn-sm">
@@ -67,10 +74,11 @@ const selectContact = (contact) => {
     </div>
     
     <div class="overflow-y-auto h-full pb-24">
-      <div v-for="contact in filteredContacts" :key="contact.pubkey" 
-           @click="selectContact(contact)"
-           :class="['flex p-3 border-b border-base-300 hover:bg-base-300 cursor-pointer', 
-                    nostrStore.selectedContact?.pubkey === contact.pubkey ? 'bg-base-300' : '']">
+      <div
+v-for="contact in filteredContacts" :key="contact.pubkey" 
+           :class="['flex p-3 border-b border-base-300 hover:bg-base-300 cursor-pointer relative', 
+                    nostrStore.selectedContact?.pubkey === contact.pubkey ? 'bg-base-300' : '']"
+           @click="selectContact(contact)">
 
         <div class="mr-3">
           <ContactPicture :contact="contact" />
@@ -83,6 +91,12 @@ const selectContact = (contact) => {
           <div class="text-sm truncate opacity-70">{{ contact.lastMessage }}</div>
         </div>
         <div v-if="contact.unreadCount" class="badge badge-primary badge-sm ml-1">{{ contact.unreadCount }}</div>
+        
+        <div class="absolute right-2 top-2" @click.stop="hideContact($event, contact)">
+          <div class="tooltip tooltip-left" data-tip="Hide chat">
+            <XMarkIcon class="w-4 h-4 text-gray-400 hover:text-gray-700" />
+          </div>
+        </div>
       </div>
       
       <div v-if="filteredContacts.length === 0" class="p-4 text-center opacity-60">

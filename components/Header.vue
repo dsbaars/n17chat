@@ -27,7 +27,7 @@ onMounted(async () => {
         <label tabindex="0" class="btn btn-ghost btn-circle avatar placeholder">
 
           <div class="bg-neutral text-neutral-content rounded-full w-10">
-            <img :src="contact?.picture" />
+            <img :src="contact?.picture" >
           </div>
         </label>
         <!-- <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">

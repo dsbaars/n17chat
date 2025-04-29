@@ -5,8 +5,8 @@ import { ref, watch, nextTick } from 'vue'
 import ChatMessage from '~/components/Chat/Message.vue'
 import ContactPicture from '~/components/Chat/ContactPicture.vue'
 import MessageInput from '~/components/Chat/MessageInput.vue'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import Alert from '~/components/UI/Alert.vue'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
+
 const nostrStore = useNostrStore()
 const { ndk } = useNostrClient()
 
@@ -101,9 +101,20 @@ const sendMessage = async (message: string) => {
       <div v-if="nostrStore.selectedContact" class="mr-2">
         <ContactPicture :contact="nostrStore.selectedContact" />
       </div>
-      <div v-if="nostrStore.selectedContact" class="font-semibold">
-        {{ nostrStore.selectedContact.name || nostrStore.selectedContact.pubkey.slice(0, 8) + '...' }}
+      <div v-if="nostrStore.selectedContact" class="font-semibold flex-1">
+        <div class="flex items-center justify-between">
+          <div>
+            {{ nostrStore.selectedContact.name || nostrStore.selectedContact.pubkey.slice(0, 8) + '...' }}
+          <div class="text-xs opacity-60">{{ nostrStore.selectedContact.profile?.about || 'No description' }}</div>
+          <div class="text-xs opacity-60">{{ nostrStore.selectedContact.profile?.nip05 }}</div>
+        </div>
+        <button class="btn btn-sm btn-circle btn-ghost">
+          <EllipsisHorizontalIcon class="w-4 h-4" />
+        </button>
+        </div>
+
       </div>
+     
       <div v-else class="font-semibold">No conversation selected</div>
     </div>
 
