@@ -131,7 +131,7 @@ const getSubject = () => {
       </div>
 
 
-        {{ message.content }}
+        <span class="whitespace-pre-line">{{ message.content }}</span>
 
 
       </section>

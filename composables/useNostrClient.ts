@@ -1,7 +1,6 @@
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
-import NDK from '@nostr-dev-kit/ndk'
+import NDK, { NDKNip07Signer } from '@nostr-dev-kit/ndk'
 import { NDKStore } from '@nostrify/ndk'
-import { NDKNip07Signer } from '@nostr-dev-kit/ndk'
 import { ref } from 'vue'
 
 // Create refs to hold the NDK instances

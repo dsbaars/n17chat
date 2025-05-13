@@ -58,7 +58,8 @@ const handleBackspace = () => {
 <template>
 
   <div class="flex w-full items-center border rounded-xl flex-1 mr-2">
-    <textarea v-model="message" rows="1" type="text" placeholder="Type a message..."
+    <textarea
+v-model="message" rows="1" type="text" placeholder="Type a message..."
       class="max-h-[250px] flex-grow resize-none overflow-y-auto px-4 py-2 border-none bg-transparent focus:outline-none"
       @keydown.enter.exact.prevent="handleEnter" @keydown.shift.enter.prevent="addNewline"
       @keydown.backspace="handleBackspace" @keydown.delete="handleBackspace" @input="(e) => autoGrow(e.target as HTMLTextAreaElement)" />

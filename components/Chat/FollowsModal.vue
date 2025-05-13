@@ -98,13 +98,13 @@ function closeModal() {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 opacity-70">
             <path fill-rule="evenodd" d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" clip-rule="evenodd" />
           </svg>
-          <input type="text" v-model="searchTerm" placeholder="Search follows" class="grow">
+          <input v-model="searchTerm" type="text" placeholder="Search follows" class="grow">
         </label>
       </div>
       
       <!-- Loading indicator -->
       <div v-if="loading" class="flex justify-center py-8">
-        <span class="loading loading-spinner loading-lg"></span>
+        <span class="loading loading-spinner loading-lg"/>
       </div>
       
       <!-- Follows list -->
@@ -117,8 +117,8 @@ function closeModal() {
           <div 
             v-for="user in filteredUsers" 
             :key="user.pubkey"
-            @click="selectContact(user)"
             class="flex items-center p-3 hover:bg-base-300 cursor-pointer rounded-lg"
+            @click="selectContact(user)"
           >
             <ContactPicture :contact="{ pubkey: user.pubkey, picture: user.profile?.picture, name: user.profile?.name }" size="w-10 h-10" />
             
@@ -131,7 +131,7 @@ function closeModal() {
       </div>
       
       <div class="modal-action">
-        <button @click="closeModal" class="btn">Close</button>
+        <button class="btn" @click="closeModal">Close</button>
       </div>
     </div>
     <form method="dialog" class="modal-backdrop" @click="closeModal">

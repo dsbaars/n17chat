@@ -455,7 +455,7 @@ export const useNostrStore = defineStore('nostr', {
     
     async createOrSelectContact(contactData: { pubkey: string, name?: string, picture?: string }) {
       // Check if contact already exists
-      let contact = await db.contacts.get(contactData.pubkey)
+      const contact = await db.contacts.get(contactData.pubkey)
       
       if (contact) {
         // If it exists but is hidden, unhide it

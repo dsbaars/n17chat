@@ -200,7 +200,7 @@ const backdrop = () => {
         </div>
 
         <div v-else class="space-y-3">
-          <ChatMessage v-for="message in messages" :key="message.id" :message="message" @openModal="openModal" />
+          <ChatMessage v-for="message in messages" :key="message.id" :message="message" @open-modal="openModal" />
         </div>
       </template>
 
@@ -212,9 +212,9 @@ const backdrop = () => {
     </div>
 
     <AppModal 
-      v-model:isOpen="isModalOpen"
-      @close="closeModal"
+      v-model:is-open="isModalOpen"
       size="xl"
+      @close="closeModal"
     >
       <template #header>
         <h3 class="font-bold text-lg">Raw Message</h3>
@@ -228,7 +228,7 @@ const backdrop = () => {
     </AppModal>
 
     <div role="" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-100">
-      <Alert :type="alert.type" :message="alert.message" closable v-if="alerts.length > 0" v-for="alert in alerts" />
+      <Alert v-for="alert in alerts" v-if="alerts.length > 0" :type="alert.type" :message="alert.message" closable />
     </div>
   </div>
 </template>

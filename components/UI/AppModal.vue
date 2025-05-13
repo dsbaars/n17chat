@@ -96,11 +96,11 @@ const sizeClass = computed(() => {
         </button>
         
         <!-- Header slot for title -->
-        <slot name="header"></slot>
+        <slot name="header"/>
         
         <!-- Default slot for content -->
         <div class="py-4">
-          <slot></slot>
+          <slot/>
         </div>
         
         <!-- Footer slot for actions -->

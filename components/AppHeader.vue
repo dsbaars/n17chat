@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useNostrStore } from '~/stores/nostr'
 import { useNostrClient, initializeNDK } from '~/composables/useNostrClient'
-import { useThemeStore } from '~/stores/theme'
 import { SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/vue/24/outline'
 import type { ThemeMode } from '~/stores/theme'
 
@@ -46,13 +45,13 @@ const setTheme = (theme: ThemeMode) => {
           <ComputerDesktopIcon v-else class="h-5 w-5" />
         </label>
         <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-          <li><a @click="setTheme('light')" :class="{ 'active': $colorMode.preference === 'light' }">
+          <li><a :class="{ 'active': $colorMode.preference === 'light' }" @click="setTheme('light')">
             <SunIcon class="h-5 w-5 mr-2" />Light
           </a></li>
-          <li><a @click="setTheme('dark')" :class="{ 'active': $colorMode.preference === 'dark' }">
+          <li><a :class="{ 'active': $colorMode.preference === 'dark' }" @click="setTheme('dark')">
             <MoonIcon class="h-5 w-5 mr-2" />Dark
           </a></li>
-          <li><a @click="setTheme('system')" :class="{ 'active': $colorMode.preference === 'system' }">
+          <li><a :class="{ 'active': $colorMode.preference === 'system' }" @click="setTheme('system')">
             <ComputerDesktopIcon class="h-5 w-5 mr-2" />System
           </a></li>
         </ul>
