@@ -6,14 +6,23 @@ import ChatMessage from '~/components/Chat/Message.vue'
 import ContactPicture from '~/components/Chat/ContactPicture.vue'
 import MessageInput from '~/components/Chat/MessageInput.vue'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
+import Alert from '~/components/UI/Alert.vue'
+import { nip19 } from 'nostr-tools'
+import type { Message } from '~/types/nostr'
+import AppModal from '~/components/UI/Modal.vue'
+import VueJsonPretty from 'vue-json-pretty'
+import 'vue-json-pretty/lib/styles.css';
 
 const nostrStore = useNostrStore()
 const { ndk } = useNostrClient()
 
-const messages = ref([])
+const messages = ref<Message[]>([])
 const newMessage = ref('')
 const messagesContainer = ref(null)
 const alerts = ref([])
+const isModalOpen = ref(false)
+const modalContent = ref<Message | null>(null)
+
 // Function to load messages for a contact
 const loadMessagesForContact = async (pubkey) => {
   const events = await nostrStore.getEventsByPubkey(pubkey)
@@ -77,19 +86,73 @@ const sendMessage = async (message: string) => {
       message: 'This user has not configured their inbox relay yet. Please ask them to do so.'
     })
     return
-  } 
+  }
 
   try {
     const wraps = await sendPrivateDirectMessage(ndk, nostrStore.selectedContact.pubkey, message)
 
-  if (wraps) {
-    // Scroll to bottom after new message
-    await nextTick()
-    scrollToBottom()
-  }
+    if (wraps) {
+      // Scroll to bottom after new message
+      await nextTick()
+      scrollToBottom()
+    }
   } catch (error) {
     console.error('Error sending message', error)
   }
+}
+
+// Define client references for various Nostr platforms
+const getClientLinks = (pubkey: string): { name: string, url: string }[] => {
+  // Generate nprofile for the pubkey
+  const nprofileCode = nostrStore.selectedContact?.profile ? 
+    nip19.nprofileEncode({
+      pubkey: pubkey,
+      relays: nostrStore.selectedContact.profile.relays || []
+    }) : 
+    nip19.npubEncode(pubkey);
+
+  const npubCode = nostrStore.selectedContact?.profile ?
+    nip19.npubEncode(pubkey) :
+    nip19.npubEncode(pubkey);
+
+  // Define all available clients with their base URLs
+  const clients = [
+    { name: "Nosta", base: "https://nosta.me/{code}" },
+    { name: "Snort", base: "https://snort.social/{code}" },
+    { name: "Olas", base: "https://olas.app/{npub}" },
+    { name: "Primal", base: "https://primal.net/p/{code}" },
+    { name: "Nostrudel", base: "https://nostrudel.ninja/#/u/{npub}" },
+    { name: "Nostter", base: "https://nostter.app/{code}" },
+    { name: "Jumble", base: "https://jumble.social/users/{npub}" },
+    { name: "Coracle", base: "https://coracle.social/{code}" },
+    // { name: "relay.tools", base: "https://relay.tools/posts/?relay=wss://{code}" },
+    { name: "Iris", base: "https://iris.to/{npub}" },
+    { name: "zap.stream", base: "https://zap.stream/p/{npub}" },
+    // { name: "Nostrrr", base: "https://nostrrr.com/p/{code}" },
+    { name: "YakiHonne", base: "https://yakihonne.com/users/{code}" },
+    { name: "Habla", base: "https://habla.news/p/{code}" },
+    { name: "njump.me", base: "https://njump.me/{npub}" }
+  ];
+  
+  // Replace {code} with the actual nprofile code
+  return clients.map(client => ({
+    name: client.name,
+    url: client.base.replace('{code}', nprofileCode).replace('{npub}', npubCode)
+  }));
+};
+
+const nprofile = computed(() => nostrStore.selectedContact.profile ? nip19.nprofileEncode(nostrStore.selectedContact.profile) : null)
+
+const openModal = (message: Message) => {
+  isModalOpen.value = true
+  modalContent.value = message
+}
+const closeModal = () => {
+  isModalOpen.value = false
+}
+
+const backdrop = () => {
+  return nostrStore.selectedContact?.profile?.banner || ""
 }
 </script>
 
@@ -105,16 +168,22 @@ const sendMessage = async (message: string) => {
         <div class="flex items-center justify-between">
           <div>
             {{ nostrStore.selectedContact.name || nostrStore.selectedContact.pubkey.slice(0, 8) + '...' }}
-          <div class="text-xs opacity-60">{{ nostrStore.selectedContact.profile?.about || 'No description' }}</div>
-          <div class="text-xs opacity-60">{{ nostrStore.selectedContact.profile?.nip05 }}</div>
-        </div>
-        <button class="btn btn-sm btn-circle btn-ghost">
-          <EllipsisHorizontalIcon class="w-4 h-4" />
-        </button>
+            <div class="text-xs opacity-60">{{ nostrStore.selectedContact.profile?.about || 'No description' }}</div>
+          </div>
+          <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-sm btn-circle btn-ghost">
+              <EllipsisHorizontalIcon class="w-4 h-4" />
+            </label>
+            <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-200 rounded-box z-[1]  p-2 shadow-xl">
+              <li><a @click="() => openModal(nostrStore.selectedContact)">View profile</a></li>
+              <li v-for="client in getClientLinks(nostrStore.selectedContact.pubkey)" :key="client.name"><a :href="client.url" target="_blank">{{ client.name }}</a></li>
+            </ul>
+          </div>
+
         </div>
 
       </div>
-     
+
       <div v-else class="font-semibold">No conversation selected</div>
     </div>
 
@@ -131,7 +200,7 @@ const sendMessage = async (message: string) => {
         </div>
 
         <div v-else class="space-y-3">
-          <ChatMessage v-for="message in messages" :key="message.id" :message="message" />
+          <ChatMessage v-for="message in messages" :key="message.id" :message="message" @openModal="openModal" />
         </div>
       </template>
 
@@ -142,13 +211,24 @@ const sendMessage = async (message: string) => {
       <MessageInput v-model="newMessage" @send="sendMessage" />
     </div>
 
-   
+    <AppModal 
+      v-model:isOpen="isModalOpen"
+      @close="closeModal"
+      size="xl"
+    >
+      <template #header>
+        <h3 class="font-bold text-lg">Raw Message</h3>
+      </template>
+      
+      <vue-json-pretty :data="modalContent" :deep="3" />
+      
+      <template #footer>
+        <button class="btn btn-outline" @click="closeModal">Close</button>
+      </template>
+    </AppModal>
+
     <div role="" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-100">
-
-      <Alert :type="alert.type" :message="alert.message"  closable v-if="alerts.length > 0" v-for="alert in alerts"  />
-
-      <!-- <ExclamationTriangleIcon class="w-6 h-6" />
-      <span>This user has not configured their inbox relay yet. Please ask them to do so.</span> -->
+      <Alert :type="alert.type" :message="alert.message" closable v-if="alerts.length > 0" v-for="alert in alerts" />
     </div>
   </div>
 </template>

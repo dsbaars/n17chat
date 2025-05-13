@@ -126,6 +126,18 @@ export async function getInboxDMRelays(ndk: NDK, pubkey: string) {
     return event.tags.filter((tag: any) => tag[0] === 'relay').map((tag: any) => tag[1])
 }
 
+export async function getFollows(ndk: NDK, pubkey: string) {
+    const user = await ndk.getUser({
+        pubkey: pubkey
+    })
+
+    if (!user) {
+        return []
+    }
+
+    return user.followSet()
+}
+
 export function getOutboxRelays(pubkey: string) {
     return `wss://relay.damus.io?pubkey=${pubkey}`
 }

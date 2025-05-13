@@ -4,9 +4,11 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
 import { ref, computed, onMounted } from 'vue'
 import ContactPicture from '~/components/Chat/ContactPicture.vue'
+import FollowsModal from '~/components/Chat/FollowsModal.vue'
 
 const nostrStore = useNostrStore()
 const searchTerm = ref('')
+const isModalOpen = ref(false)
 
 // Computed property to filter contacts based on search term
 const filteredContacts = computed(() => {
@@ -32,9 +34,9 @@ const formatTime = (time) => {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   
   if (time >= today) {
-    return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+    return time.toLocaleTimeString([ Intl.DateTimeFormat().resolvedOptions().locale ], { hour: '2-digit', minute: '2-digit', hour12: false })
   } else {
-    return time.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    return time.toLocaleDateString([ Intl.DateTimeFormat().resolvedOptions().locale ], { month: 'numeric', day: 'numeric' })
   }
 }
 
@@ -53,6 +55,16 @@ const hideContact = (event, contact) => {
   event.stopPropagation() // Prevent contact selection when clicking the hide button
   nostrStore.hideContact(contact.pubkey)
 }
+
+// Open the follows modal
+const openFollowsModal = () => {
+  isModalOpen.value = true
+}
+
+// Close the follows modal
+const closeFollowsModal = () => {
+  isModalOpen.value = false
+}
 </script>
 
 <template>
@@ -65,7 +77,7 @@ const hideContact = (event, contact) => {
             <input v-model="searchTerm" type="text" placeholder="Search" class="grow" >
           </label>
         </div>
-        <button class="btn btn-circle btn-sm">
+        <button class="btn btn-circle btn-sm" @click="openFollowsModal">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -75,10 +87,10 @@ const hideContact = (event, contact) => {
     
     <div class="overflow-y-auto h-full pb-24">
       <div
-v-for="contact in filteredContacts" :key="contact.pubkey" 
-           :class="['flex p-3 border-b border-base-300 hover:bg-base-300 cursor-pointer relative', 
-                    nostrStore.selectedContact?.pubkey === contact.pubkey ? 'bg-base-300' : '']"
-           @click="selectContact(contact)">
+       v-for="contact in filteredContacts" :key="contact.pubkey" 
+          :class="['flex p-3 border-b border-base-300 hover:bg-base-300 cursor-pointer relative', 
+                  nostrStore.selectedContact?.pubkey === contact.pubkey ? 'bg-base-300' : '']"
+          @click="selectContact(contact)">
 
         <div class="mr-3">
           <ContactPicture :contact="contact" />
@@ -86,7 +98,7 @@ v-for="contact in filteredContacts" :key="contact.pubkey"
         <div class="flex-1 min-w-0">
           <div class="flex justify-between">
             <div class="font-medium truncate">{{ contact.name || shortPubkey(contact.pubkey) }}</div>
-            <div class="text-xs opacity-60">{{ formatTime(contact.lastMessageTime) }}</div>
+            <div class="text-xs opacity-60 pr-4">{{ formatTime(contact.lastMessageTime) }}</div>
           </div>
           <div class="text-sm truncate opacity-70">{{ contact.lastMessage }}</div>
         </div>
@@ -103,6 +115,13 @@ v-for="contact in filteredContacts" :key="contact.pubkey"
         {{ searchTerm ? 'No matching contacts' : 'No conversations yet' }}
       </div>
     </div>
+    
+    <!-- Modal for follows -->
+    <FollowsModal 
+      :is-open="isModalOpen" 
+      @close="closeFollowsModal" 
+      @contact-selected="selectContact"
+    />
   </div>
 </template>
 

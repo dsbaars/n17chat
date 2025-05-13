@@ -218,7 +218,8 @@ export const useNostrStore = defineStore('nostr', {
         const { ndk } = useNostrClient()
         if (!ndk) return null
         
-        const profile = await ndk.getUser({ pubkey }).fetchProfile()
+        const profile = { ...(await ndk.getUser({ pubkey }).fetchProfile()) }
+
         if (!profile) return null
         
         // Check if contact exists
@@ -258,7 +259,7 @@ export const useNostrStore = defineStore('nostr', {
         
         return contact
       } catch (error) {
-        console.error('Error updating contact profile', error)
+        console.error('Error updating contact profile for ', pubkey, error)
         return null
       }
     },
@@ -293,7 +294,7 @@ export const useNostrStore = defineStore('nostr', {
             // If contact doesn't exist, create a new one
             contact = {
               pubkey: pubkey as string,
-              lastMessage: latestEvent.content,
+              lastMessage: latestEvent.kind == 15 ? '🖼' : latestEvent.content,
               lastMessageTime: new Date(latestEvent.created_at * 1000),
               hidden: false
             }
@@ -315,10 +316,10 @@ export const useNostrStore = defineStore('nostr', {
             // Update the last message if newer
             const eventTime = new Date(latestEvent.created_at * 1000)
             if (!contact.lastMessageTime || eventTime > contact.lastMessageTime) {
-              contact.lastMessage = latestEvent.content
+              contact.lastMessage = latestEvent.kind == 15 ? '🖼' : latestEvent.content
               contact.lastMessageTime = eventTime
               await db.contacts.update(pubkey as string, {
-                lastMessage: latestEvent.content,
+                lastMessage: latestEvent.kind == 15 ? '🖼' : latestEvent.content,
                 lastMessageTime: eventTime
               })
             }
@@ -392,7 +393,7 @@ export const useNostrStore = defineStore('nostr', {
               // Create contact
               const contact = {
                 pubkey,
-                lastMessage: latestEvent.content,
+                lastMessage: latestEvent.kind == 15 ? '🖼' : latestEvent.content,
                 lastMessageTime: new Date(latestEvent.created_at * 1000),
                 hidden: false
               }
@@ -450,6 +451,36 @@ export const useNostrStore = defineStore('nostr', {
       
       // Refresh contacts list
       await this.getContacts()
+    },
+    
+    async createOrSelectContact(contactData: { pubkey: string, name?: string, picture?: string }) {
+      // Check if contact already exists
+      let contact = await db.contacts.get(contactData.pubkey)
+      
+      if (contact) {
+        // If it exists but is hidden, unhide it
+        if (contact.hidden) {
+          await this.showContact(contactData.pubkey)
+        }
+        
+        // Select the contact
+        this.selectContact(contact)
+      } else {
+        // Create new contact with the provided data
+        const newContact = {
+          pubkey: contactData.pubkey,
+          name: contactData.name,
+          picture: contactData.picture,
+          hidden: false
+        }
+        
+        // Save to database
+        await db.contacts.put(newContact)
+        
+        // Add to contacts list and select it
+        this.contacts.push(newContact)
+        this.selectContact(newContact)
+      }
     }
   }
 

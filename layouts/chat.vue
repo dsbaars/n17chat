@@ -2,7 +2,7 @@
 
 <template>
   <div class="flex flex-col h-screen">
-    <Header />
+    <AppHeader />
     <div class="flex-1 overflow-y-hidden mb-18">
       <slot />
     </div>

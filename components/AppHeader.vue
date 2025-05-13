@@ -1,0 +1,78 @@
+<script setup lang="ts">
+import { useNostrStore } from '~/stores/nostr'
+import { useNostrClient, initializeNDK } from '~/composables/useNostrClient'
+import { useThemeStore } from '~/stores/theme'
+import { SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/vue/24/outline'
+import type { ThemeMode } from '~/stores/theme'
+
+const nostrStore = useNostrStore()
+const colorMode = useColorMode()
+const { ndk, initialized } = useNostrClient()
+
+// Safely handle possibly undefined ndk
+let pubkey = ''
+onMounted(async () => {
+  if (!initialized) {
+    await initializeNDK()
+  }
+
+  if (ndk && ndk.signer) {
+    const user = await (await ndk.signer).user()
+    if (user) {
+      pubkey = user.pubkey
+    }
+  }
+})
+
+const contact = computed(() => nostrStore.getContact(pubkey))
+
+// Set theme function
+const setTheme = (theme: ThemeMode) => {
+  colorMode.preference = theme
+}
+</script>
+
+<template>
+  <div class="navbar bg-base-100 border-b border-base-300">
+    <div class="flex-1">
+      <a class="btn btn-ghost normal-case text-xl">N17Chat</a>
+    </div>
+    <div class="flex-none">
+      <!-- Theme Switcher -->
+      <div class="dropdown dropdown-end mr-2">
+        <label tabindex="0" class="btn btn-ghost btn-circle">
+          <SunIcon v-if="$colorMode.preference === 'light'" class="h-5 w-5" />
+          <MoonIcon v-else-if="$colorMode.preference === 'dark'" class="h-5 w-5" />
+          <ComputerDesktopIcon v-else class="h-5 w-5" />
+        </label>
+        <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a @click="setTheme('light')" :class="{ 'active': $colorMode.preference === 'light' }">
+            <SunIcon class="h-5 w-5 mr-2" />Light
+          </a></li>
+          <li><a @click="setTheme('dark')" :class="{ 'active': $colorMode.preference === 'dark' }">
+            <MoonIcon class="h-5 w-5 mr-2" />Dark
+          </a></li>
+          <li><a @click="setTheme('system')" :class="{ 'active': $colorMode.preference === 'system' }">
+            <ComputerDesktopIcon class="h-5 w-5 mr-2" />System
+          </a></li>
+        </ul>
+      </div>
+      
+      <!-- Avatar Dropdown -->
+      <div class="dropdown dropdown-end">
+        <label tabindex="0" class="btn btn-ghost btn-circle avatar placeholder">
+          <div class="bg-neutral text-neutral-content rounded-full w-10">
+            <img :src="contact?.picture" >
+          </div>
+        </label>
+        <!-- <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a>Profile</a></li>
+          <li><a>Settings</a></li>
+          <li><a>Logout</a></li>
+        </ul> -->
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped></style> 

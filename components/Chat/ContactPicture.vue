@@ -11,6 +11,10 @@ const props = defineProps({
   }
 })
 
+const pubkeyColor = computed(() => {
+  return `#${props.contact.pubkey.slice(0, 6)}`
+})
+
 // Default size if not provided
 const size = props.size
 </script>
@@ -18,9 +22,9 @@ const size = props.size
 <template>
   <div class="placeholder">
     <div v-if="contact.picture" class="avatar" :class="size">
-      <img :src="contact.picture" class="rounded-full" :class="size" >
+      <img :src="contact.picture" class="rounded-full" :style="{ border: `2px solid ${pubkeyColor}` }" :class="size" >
     </div>
-    <div v-else class="bg-neutral text-neutral-content rounded-full flex items-center justify-center" :class="size">
+    <div v-else class="bg-neutral text-neutral-content rounded-full flex items-center justify-center" :style="{ backgroundColor: pubkeyColor }" :class="size">
       <span>{{ contact.name?.charAt(0) || contact.pubkey.charAt(0) }}</span>
     </div>
   </div>
