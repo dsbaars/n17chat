@@ -59,5 +59,5 @@ The app uses Dexie.js to store Nostr events with the following schema:
 
 ### Requirements
 
-- Node.js 18+
+- Node.js 22+
 - Browser with Nostr extension (for signing)
