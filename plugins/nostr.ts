@@ -1,7 +1,7 @@
 import { useNostrStore } from '~/stores/nostr'
-import { initializeNDK, useNostrClient } from '~/composables/useNostrClient'
-import { NSchema } from '@nostrify/nostrify'
-import { NDKUser } from '@nostr-dev-kit/ndk'
+import { initializeNDK } from '~/composables/useNostrClient'
+// import { NSchema } from '@nostrify/nostrify'
+import { NDKUser, type NDKTag } from '@nostr-dev-kit/ndk'
 
 export default defineNuxtPlugin(async () => {
   // Initialize NDK and get instances
@@ -66,7 +66,7 @@ export default defineNuxtPlugin(async () => {
           parsedUnsealed.pubkey = parsed.pubkey
         }
 
-        const subject = parsedUnsealed.tags.find((tag: any) => tag[0] === 'subject')
+        const subject = parsedUnsealed.tags.find((tag: NDKTag) => tag[0] === 'subject')
         if (subject) {
           console.log('subject', subject[1])
         }

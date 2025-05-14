@@ -118,13 +118,13 @@ async function unhideContact(pubkey: string) {
               >
               <button 
                 class="btn btn-sm join-item" 
-                @click="addDMRelay" 
-                :disabled="!isValidUrl || !newRelayUrl"
+                :disabled="!isValidUrl || !newRelayUrl" 
+                @click="addDMRelay"
               >Add</button>
             </div>
             <p v-if="!isValidUrl && newRelayUrl" class="text-error text-xs mt-1">{{ errorMessage }}</p>
             <p v-else-if="newRelayUrl && isValidUrl" class="text-success text-xs mt-1">Valid relay URL</p>
-            <p v-else class="text-xs mt-1 text-base-content/70"></p>
+            <p v-else class="text-xs mt-1 text-base-content/70"/>
           </div>
         </div>
       </div>
@@ -140,7 +140,7 @@ async function unhideContact(pubkey: string) {
           
           <!-- DM Relay Selection Guide -->
           <div class="alert alert-info py-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span class="text-sm">Prefer relays that implement <a href="https://github.com/nostr-protocol/nips/blob/master/42.md" class="link link-hover" target="_blank">AUTH</a> to increase protection of your DMs</span>
           </div>
           
@@ -181,12 +181,12 @@ async function unhideContact(pubkey: string) {
             <div 
               v-for="contact in hiddenContacts" 
               :key="contact.pubkey"
-              @click="unhideContact(contact.pubkey)"
               class="flex items-center gap-2 p-2 bg-base-100 rounded-lg hover:bg-primary hover:bg-opacity-10 cursor-pointer transition-all"
+              @click="unhideContact(contact.pubkey)"
             >
               <div class="avatar">
                 <div class="w-8 rounded-full">
-                  <img v-if="contact.picture" :src="contact.picture" :alt="contact.name || 'User'" />
+                  <img v-if="contact.picture" :src="contact.picture" :alt="contact.name || 'User'" >
                   <div v-else class="bg-neutral-focus text-neutral-content rounded-full w-8 h-8 flex items-center justify-center">
                     <span>{{ (contact.name || contact.pubkey.substring(0, 2)).substring(0, 1).toUpperCase() }}</span>
                   </div>

@@ -19,13 +19,13 @@ const { ndk } = useNostrClient()
 const relayStore = useRelayStore()
 const messages = ref<Message[]>([])
 const newMessage = ref('')
-const messagesContainer = ref(null)
-const alerts = ref([])
+const messagesContainer = ref<HTMLElement | null>(null)
+const alerts = ref<{ type: string, message: string }[]>([])
 const isModalOpen = ref(false)
 const modalContent = ref<Message | null>(null)
 
 // Function to load messages for a contact
-const loadMessagesForContact = async (pubkey) => {
+const loadMessagesForContact = async (pubkey: string) => {
   const events = await nostrStore.getEventsByPubkey(pubkey)
   // Sort messages by created_at timestamp to show in chronological order
   messages.value = events.sort((a, b) => a.created_at - b.created_at)
@@ -53,20 +53,20 @@ watch(() => nostrStore.loadedEvents, async () => {
   }
 }, { deep: true })
 
-// Format timestamp for messages
-const formatMessageTime = (timestamp: number) => {
-  const date = new Date(timestamp * 1000)
-  return date.toLocaleString(['nl-NL'], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-}
+// // Format timestamp for messages
+// const formatMessageTime = (timestamp: number) => {
+//   const date = new Date(timestamp * 1000)
+//   return date.toLocaleString(['nl-NL'], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+// }
 
-// Check if message is from the current user
-const isCurrentUser = (message: NostrEvent) => {
-  // If the message has isSent flag set, it was sent by the current user
-  if (message.isSent) return true
+// // Check if message is from the current user
+// const isCurrentUser = (message: NostrEvent) => {
+//   // If the message has isSent flag set, it was sent by the current user
+//   if (message.isSent) return true
 
-  // Otherwise, check if the pubkey matches the current user's pubkey
-  return message.pubkey === nostrStore.currentPubkey
-}
+//   // Otherwise, check if the pubkey matches the current user's pubkey
+//   return message.pubkey === nostrStore.currentPubkey
+// }
 
 // Scroll to bottom of messages
 const scrollToBottom = () => {
@@ -142,7 +142,7 @@ const getClientLinks = (pubkey: string): { name: string, url: string }[] => {
   }));
 };
 
-const nprofile = computed(() => nostrStore.selectedContact.profile ? nip19.nprofileEncode(nostrStore.selectedContact.profile) : null)
+// const nprofile = computed(() => nostrStore.selectedContact.profile ? nip19.nprofileEncode(nostrStore.selectedContact.profile) : null)
 
 const openModal = (message: Message) => {
   isModalOpen.value = true
@@ -152,9 +152,9 @@ const closeModal = () => {
   isModalOpen.value = false
 }
 
-const backdrop = () => {
-  return nostrStore.selectedContact?.profile?.banner || ""
-}
+// const backdrop = () => {
+//   return nostrStore.selectedContact?.profile?.banner || ""
+// }
 
 onMounted(async () => {
   await relayStore.fetchRelayInfo()
@@ -243,8 +243,8 @@ onMounted(async () => {
       </template>
     </AppModal>
 
-    <div role="" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-100">
-      <Alert v-for="alert in alerts" v-if="alerts.length > 0" :type="alert.type" :message="alert.message" closable />
+    <div v-if="alerts.length > 0" role="" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-100" >
+      <Alert v-for="alert in alerts" :key="alert.message" :type="alert.type" :message="alert.message" closable />
     </div>
   </div>
 </template>

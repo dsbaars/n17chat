@@ -1,8 +1,8 @@
-import { NDKEvent, NDKPrivateKeySigner, NDKRelaySet, NDKUser } from "@nostr-dev-kit/ndk";
+import { NDKEvent, NDKPrivateKeySigner, NDKRelaySet, NDKUser, type NDKTag } from "@nostr-dev-kit/ndk";
 import type NDK from "@nostr-dev-kit/ndk";
 import { NostrKind } from "~/types/nostr";
 
-export async function giftWrap(ndk: NDK, content: any, targetUser: NDKUser) {
+export async function giftWrap(ndk: NDK, content: string, targetUser: NDKUser) {
     const signer = await ndk.signer
 
     if (!signer) {
@@ -123,7 +123,7 @@ export async function getInboxDMRelays(ndk: NDK, pubkey: string) {
         return []
     }
 
-    return event.tags.filter((tag: any) => tag[0] === 'relay').map((tag: any) => tag[1])
+    return event.tags.filter((tag: NDKTag) => tag[0] === 'relay').map((tag: NDKTag) => tag[1])
 }
 
 export async function getFollows(ndk: NDK, pubkey: string) {

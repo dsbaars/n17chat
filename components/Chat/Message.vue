@@ -13,12 +13,11 @@ const props = defineProps({
 
 const emit = defineEmits(['openModal'])
 
-const { ndk } = useNostrClient()
 const nostrStore = useNostrStore()
 const imageUrl = ref('')
 
 // Format timestamp for messages
-const formatMessageTime = (timestamp) => {
+const formatMessageTime = (timestamp: number) => {
   const date = new Date(timestamp * 1000)
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -81,12 +80,9 @@ const decryptImageContent = async (content: Message) => {
 }
 
 const openModal = () => {
-  console.log('openModal', props.message)
   emit('openModal', props.message)
 }
-const closeModal = () => {
-  isModalOpen.value = false
-}
+
 onMounted(() => {
   if (props.message.kind == 15) {
     decryptImageContent(props.message).then(() => {

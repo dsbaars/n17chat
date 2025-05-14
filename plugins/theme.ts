@@ -1,5 +1,3 @@
-import { useThemeStore } from '~/stores/theme'
-
 export default defineNuxtPlugin({
   name: 'theme-plugin',
   setup() {

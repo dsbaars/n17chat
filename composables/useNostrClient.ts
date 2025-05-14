@@ -1,5 +1,5 @@
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
-import NDK, { NDKNip07Signer, NDKRelay, NDKRelaySet } from '@nostr-dev-kit/ndk'
+import NDK, { NDKNip07Signer, NDKRelaySet } from '@nostr-dev-kit/ndk'
 import { NDKStore } from '@nostrify/ndk'
 import { ref } from 'vue'
 
@@ -46,7 +46,7 @@ export async function initializeNDK() {
     ndkInstance.pool.removeRelay('wss://nos.lol')
     ndkInstance.pool.removeRelay('wss://relay.primal.net')
   }
-  
+
   // Make sure the Inbox relays are connected
   NDKRelaySet.fromRelayUrls(inboxRelays.value, ndkInstance, true, ndkInstance.pool)
 
