@@ -19,6 +19,7 @@ export interface Contact {
 
 export interface Message {
   id: string
+  kind?: number;
   pubkey: string
   content: string
   created_at: number
