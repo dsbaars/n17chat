@@ -1,5 +1,6 @@
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
-import NDK, { NDKNip07Signer, NDKRelaySet } from '@nostr-dev-kit/ndk'
+import type { NDKRelay} from '@nostr-dev-kit/ndk';
+import NDK, { NDKNip07Signer, NDKRelayAuthPolicies, NDKRelaySet } from '@nostr-dev-kit/ndk'
 import { NDKStore } from '@nostrify/ndk'
 import { ref } from 'vue'
 
@@ -16,20 +17,35 @@ export async function initializeNDK() {
   const cacheAdapter = new NDKCacheAdapterDexie({ dbName: 'ndk-cache' })
   
   const ndkInstance = new NDK({
+    signer: new NDKNip07Signer(),
     explicitRelayUrls: [
       'wss://relay.damus.io',
       'wss://nos.lol',
-      'wss://relay.primal.net'
+      'wss://relay.primal.net',
     ],
     autoConnectUserRelays: false, // don't connect to user's relays automatically as these are only for publishing
     cacheAdapter,
   })
-  
-  ndkInstance.signer = new NDKNip07Signer()
 
+  ndkInstance.relayAuthDefaultPolicy = NDKRelayAuthPolicies.signIn({ndk: ndkInstance})
+
+  ndkInstance.pool.on('relay:auth', (relay: NDKRelay, auth) => {
+    console.log('relay:auth', relay.url, auth)
+  })
+
+
+  ndkInstance.pool.on('relay:authed', (relay: NDKRelay) => {
+    console.log('relay:authed', relay.url)
+  })
+    
   await ndkInstance.connect()
   
   const self = await ndkInstance.signer?.user()
+
+  if (!self) {
+    console.error('No self')
+    return
+  }
 
   const inboxRelaysEvent = await ndkInstance.fetchEvent([
     {
@@ -46,6 +62,12 @@ export async function initializeNDK() {
     ndkInstance.pool.removeRelay('wss://nos.lol')
     ndkInstance.pool.removeRelay('wss://relay.primal.net')
   }
+
+  // for (const relay of inboxRelays.value) {
+  //   console.log('adding relay', relay)
+  //   const event = await ndkInstance.addExplicitRelay(relay, NDKRelayAuthPolicies.signIn({ndk: ndkInstance}), true)
+  //   console.log('connect event', event.events, event.connected)
+  // }
 
   // Make sure the Inbox relays are connected
   NDKRelaySet.fromRelayUrls(inboxRelays.value, ndkInstance, true, ndkInstance.pool)
