@@ -453,6 +453,18 @@ export const useNostrStore = defineStore('nostr', {
       await this.getContacts()
     },
     
+    async getHiddenContacts() {
+      try {
+        // Return hidden contacts from database
+        const hiddenContacts = await db.contacts.filter(contact => contact.hidden === true).toArray()
+        
+        return hiddenContacts
+      } catch (error) {
+        console.error('Error fetching hidden contacts', error)
+        return []
+      }
+    },
+    
     async createOrSelectContact(contactData: { pubkey: string, name?: string, picture?: string }) {
       // Check if contact already exists
       const contact = await db.contacts.get(contactData.pubkey)

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useNostrClient, initializeNDK } from '~/composables/useNostrClient'
 import { useRelayStore } from '~/stores/relays'
 import { useNostrStore } from '~/stores/nostr'
+import type { Contact } from '~/types/nostr'
 
 definePageMeta({
   layout: 'default'
@@ -14,6 +15,7 @@ const newRelayUrl = ref('')
 const isValidUrl = ref(true)
 const errorMessage = ref('')
 const nostrStore = useNostrStore()
+const hiddenContacts = ref<Contact[]>([])
 
 // Regex pattern for WSS URLs
 const wssPattern = /^wss:\/\/[a-zA-Z0-9]([a-zA-Z0-9-].*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-].*[a-zA-Z0-9])?)*(\.[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9])+(:\d+)?(\/[^/].*)?$/
@@ -55,12 +57,31 @@ onMounted(async () => {
   }
   await nostrStore.getContacts()
   await relayStore.fetchRelayInfo()
+  await loadHiddenContacts()
 })
 
 async function addDMRelay() {
   if (validateUrl(newRelayUrl.value)) {
     await relayStore.addDMRelay(newRelayUrl.value)
     newRelayUrl.value = ''
+  }
+}
+
+async function loadHiddenContacts() {
+  try {
+    hiddenContacts.value = await nostrStore.getHiddenContacts()
+  } catch (error) {
+    console.error('Error loading hidden contacts', error)
+  }
+}
+
+async function unhideContact(pubkey: string) {
+  try {
+    await nostrStore.showContact(pubkey)
+    // Refresh the hidden contacts list
+    await loadHiddenContacts()
+  } catch (error) {
+    console.error('Error unhiding contact', error)
   }
 }
 </script>
@@ -138,6 +159,45 @@ async function addDMRelay() {
               No DM relays configured
             </li>
           </ul>
+        </div>
+      </div>
+      
+      <!-- Hidden Chats -->
+      <div class="card bg-base-200 shadow-xl md:col-span-5 mt-4">
+        <div class="card-body">
+          <h2 class="card-title">
+            Hidden Chats
+            <span class="badge badge-secondary">{{ hiddenContacts.length }}</span>
+          </h2>
+          <p class="text-sm opacity-70">Chats you've hidden from your main list, click on a contact to unhide it</p>
+          
+          <div class="divider"/>
+          
+          <div v-if="hiddenContacts.length === 0" class="text-center p-4 text-base-content/70">
+            No hidden chats
+          </div>
+          
+          <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            <div 
+              v-for="contact in hiddenContacts" 
+              :key="contact.pubkey"
+              @click="unhideContact(contact.pubkey)"
+              class="flex items-center gap-2 p-2 bg-base-100 rounded-lg hover:bg-primary hover:bg-opacity-10 cursor-pointer transition-all"
+            >
+              <div class="avatar">
+                <div class="w-8 rounded-full">
+                  <img v-if="contact.picture" :src="contact.picture" :alt="contact.name || 'User'" />
+                  <div v-else class="bg-neutral-focus text-neutral-content rounded-full w-8 h-8 flex items-center justify-center">
+                    <span>{{ (contact.name || contact.pubkey.substring(0, 2)).substring(0, 1).toUpperCase() }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium truncate">{{ contact.name || 'Unknown' }}</p>
+                <p class="text-xs opacity-70 truncate">{{ contact.pubkey.substring(0, 16) }}...</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
  
