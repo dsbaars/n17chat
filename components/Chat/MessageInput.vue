@@ -64,7 +64,7 @@ v-model="message" rows="1" type="text" placeholder="Type a message..."
       @keydown.enter.exact.prevent="handleEnter" @keydown.shift.enter.prevent="addNewline"
       @keydown.backspace="handleBackspace" @keydown.delete="handleBackspace" @input="(e) => autoGrow(e.target as HTMLTextAreaElement)" />
 
-    <button class="btn btn-primary" @click="$emit('send')">
+    <button class="btn btn-primary" @click="handleSend">
       <PaperAirplaneIcon class="h-5 w-5" />
     </button>
   </div>
