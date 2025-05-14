@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { useNostrClient } from '~/composables/useNostrClient'
-import { NDKEvent } from '@nostr-dev-kit/ndk'
+import { NDKEvent, NDKRelayAuthPolicies, NDKRelaySet } from '@nostr-dev-kit/ndk'
+
+
 
 export const useRelayStore = defineStore('relays', {
   state: () => ({
@@ -9,7 +11,8 @@ export const useRelayStore = defineStore('relays', {
     writeRelays: [] as string[],
     dmRelays: [] as string[],
     isLoading: false,
-    isLoaded: false
+    isLoaded: false,
+    publishRelaySet: null as NDKRelaySet | null,
   }),
   
   actions: {
@@ -17,7 +20,17 @@ export const useRelayStore = defineStore('relays', {
       if (this.isLoaded) return
       this.isLoading = true
       const { ndk } = useNostrClient()
+
+      if (!ndk) {
+        return
+      }
       
+      this.publishRelaySet = NDKRelaySet.fromRelayUrls([
+        'wss://relay.damus.io',
+        'wss://nos.lol',
+        'wss://relay.primal.net',
+      ], ndk, false)
+
       try {
         // Get currently connected relays
         if (ndk?.pool?.relays) {
@@ -87,6 +100,21 @@ export const useRelayStore = defineStore('relays', {
       }
     },
     
+    /**
+     * Check if a relay is currently connected
+     * @param relayUrl The URL of the relay to check
+     * @returns Boolean indicating whether the relay is connected
+     */
+    isConnected(relayUrl: string): boolean {
+      const { ndk } = useNostrClient()
+      
+      if (!ndk?.pool?.relays) {
+        return false
+      }
+      
+      return ndk.pool.isRelayConnected(relayUrl)
+    },
+    
     async addReadRelay(relayUrl: string) {
       if (!this.readRelays.includes(relayUrl)) {
         const { ndk } = useNostrClient()
@@ -147,6 +175,8 @@ export const useRelayStore = defineStore('relays', {
       if (!this.dmRelays.includes(relayUrl)) {
         const { ndk } = useNostrClient()
         const user = await ndk?.signer?.user()
+
+        ndk?.addExplicitRelay(relayUrl, NDKRelayAuthPolicies.signIn({ndk: ndk}), true)
         
         if (user && ndk) {
           // Create or update NIP-51 DM relay event
@@ -160,9 +190,11 @@ export const useRelayStore = defineStore('relays', {
             created_at: Math.floor(Date.now() / 1000)
           })
           
+
+
           // Sign and publish the event
           await event.sign()
-          await event.publish()
+          await event.publish(this.publishRelaySet)
           
           // Update local state
           this.dmRelays.push(relayUrl)
@@ -228,6 +260,8 @@ export const useRelayStore = defineStore('relays', {
         // Remove from DM relays
         this.dmRelays = this.dmRelays.filter(url => url !== relayUrl)
         
+        ndk?.pool.removeRelay(relayUrl);
+
         // Create or update NIP-51 DM relay event
         const event = new NDKEvent(ndk, {
           kind: 10050,
@@ -238,7 +272,7 @@ export const useRelayStore = defineStore('relays', {
         
         // Sign and publish the event
         await event.sign()
-        await event.publish()
+        await event.publish(this.publishRelaySet)
       }
     }
   }
