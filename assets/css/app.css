@@ -2,3 +2,5 @@
 @plugin "daisyui" {
     themes: light --default, dim --prefersdark;
 }
+
+@source inline("alert-{warning,error,success,info}");

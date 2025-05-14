@@ -8,11 +8,13 @@ export const useRelayStore = defineStore('relays', {
     readRelays: [] as string[],
     writeRelays: [] as string[],
     dmRelays: [] as string[],
-    isLoading: false
+    isLoading: false,
+    isLoaded: false
   }),
   
   actions: {
     async fetchRelayInfo() {
+      if (this.isLoaded) return
       this.isLoading = true
       const { ndk } = useNostrClient()
       
@@ -32,32 +34,32 @@ export const useRelayStore = defineStore('relays', {
           this.writeRelays = []
           this.dmRelays = []
           
-          // Fetch NIP-65 relay list (kind: 10002)
-          const nip65Events = await ndk?.fetchEvents({
-            kinds: [10002],
-            authors: [user.pubkey]
-          })
+          // // Fetch NIP-65 relay list (kind: 10002)
+          // const nip65Events = await ndk?.fetchEvents({
+          //   kinds: [10002],
+          //   authors: [user.pubkey]
+          // })
           
-          if (nip65Events) {
-            const nip65Event = Array.from(nip65Events)[0]
-            if (nip65Event) {
-              // Process relay tags
-              nip65Event.tags.forEach(tag => {
-                if (tag[0] === 'r') {
-                  const relayUrl = tag[1]
-                  const marker = tag[2]
+          // if (nip65Events) {
+          //   const nip65Event = Array.from(nip65Events)[0]
+          //   if (nip65Event) {
+          //     // Process relay tags
+          //     nip65Event.tags.forEach(tag => {
+          //       if (tag[0] === 'r') {
+          //         const relayUrl = tag[1]
+          //         const marker = tag[2]
                   
-                  if (!marker || marker === 'read') {
-                    this.readRelays.push(relayUrl)
-                  }
+          //         if (!marker || marker === 'read') {
+          //           this.readRelays.push(relayUrl)
+          //         }
                   
-                  if (!marker || marker === 'write') {
-                    this.writeRelays.push(relayUrl)
-                  }
-                }
-              })
-            }
-          }
+          //         if (!marker || marker === 'write') {
+          //           this.writeRelays.push(relayUrl)
+          //         }
+          //       }
+          //     })
+          //   }
+          // }
           
           // Fetch DM relay list (kind: 10050) from NIP-51
           const dmRelayEvents = await ndk?.fetchEvents({
@@ -77,6 +79,7 @@ export const useRelayStore = defineStore('relays', {
             }
           }
         }
+        this.isLoaded = true
       } catch (error) {
         console.error('Error fetching relay information:', error)
       } finally {

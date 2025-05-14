@@ -34,7 +34,7 @@ const setTheme = (theme: ThemeMode) => {
 <template>
   <div class="navbar bg-base-100 border-b border-base-300">
     <div class="flex-1">
-      <a class="btn btn-ghost normal-case text-xl">n17.chat</a>
+      <a class="btn btn-ghost normal-case text-xl" @click="navigateTo('/')">n17.chat</a>
     </div>
     <div class="flex-none">
       <!-- Theme Switcher -->

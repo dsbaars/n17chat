@@ -12,10 +12,11 @@ import type { Message } from '~/types/nostr'
 import AppModal from '~/components/UI/Modal.vue'
 import VueJsonPretty from 'vue-json-pretty'
 import 'vue-json-pretty/lib/styles.css';
+import { useRelayStore } from '~/stores/relays'
 
 const nostrStore = useNostrStore()
 const { ndk } = useNostrClient()
-
+const relayStore = useRelayStore()
 const messages = ref<Message[]>([])
 const newMessage = ref('')
 const messagesContainer = ref(null)
@@ -154,6 +155,16 @@ const closeModal = () => {
 const backdrop = () => {
   return nostrStore.selectedContact?.profile?.banner || ""
 }
+
+onMounted(async () => {
+  await relayStore.fetchRelayInfo()
+  if (relayStore.dmRelays.length === 0) {
+    alerts.value.push({
+      type: 'warning',
+      message: 'No DM relays found. Please add them in settings.'
+    })
+  }
+})
 </script>
 
 <template>
@@ -207,8 +218,13 @@ const backdrop = () => {
     </div>
 
     <!-- Message input -->
-    <div v-if="nostrStore.selectedContact" class="border-t border-base-300 p-3 bg-base-100">
+    <div v-if="relayStore.dmRelays.length > 0 && nostrStore.selectedContact" class="border-t border-base-300 p-3 bg-base-100">
       <MessageInput v-model="newMessage" @send="sendMessage" />
+    </div>
+    <div v-else-if="relayStore.dmRelays.length === 0" class="border-t border-base-300 p-3 bg-base-100">
+      <div class="flex items-center justify-center text-lg opacity-50">
+        No DM relays found. You need to add them before you can securely send and receive messages.
+      </div>
     </div>
 
     <AppModal 

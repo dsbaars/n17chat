@@ -1,5 +1,5 @@
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
-import NDK, { NDKNip07Signer } from '@nostr-dev-kit/ndk'
+import NDK, { NDKNip07Signer, NDKRelay, NDKRelaySet } from '@nostr-dev-kit/ndk'
 import { NDKStore } from '@nostrify/ndk'
 import { ref } from 'vue'
 
@@ -7,6 +7,7 @@ import { ref } from 'vue'
 const ndk = ref<NDK>()
 const ndkStore = ref<NDKStore>()
 const initialized = ref(false)
+const inboxRelays = ref<string[]>([])
 
 // Create a function to initialize NDK
 export async function initializeNDK() {
@@ -20,14 +21,35 @@ export async function initializeNDK() {
       'wss://nos.lol',
       'wss://relay.primal.net'
     ],
+    autoConnectUserRelays: false, // don't connect to user's relays automatically as these are only for publishing
     cacheAdapter,
-    autoConnectUserRelays: true
   })
   
   ndkInstance.signer = new NDKNip07Signer()
 
   await ndkInstance.connect()
   
+  const self = await ndkInstance.signer?.user()
+
+  const inboxRelaysEvent = await ndkInstance.fetchEvent([
+    {
+      kinds: [10050],
+      authors: [self?.pubkey]
+    }
+  ])
+
+  inboxRelays.value = inboxRelaysEvent?.getMatchingTags('relay').map(r => r[1]) ?? []
+  
+  if (inboxRelays.value.length > 0) {
+    // Disconnect from the bootstrap relays
+    ndkInstance.pool.removeRelay('wss://relay.damus.io')
+    ndkInstance.pool.removeRelay('wss://nos.lol')
+    ndkInstance.pool.removeRelay('wss://relay.primal.net')
+  }
+  
+  // Make sure the Inbox relays are connected
+  NDKRelaySet.fromRelayUrls(inboxRelays.value, ndkInstance, true, ndkInstance.pool)
+
   // Initialize the NDK store
   const ndkStoreInstance = new NDKStore(ndkInstance)
   
@@ -78,6 +100,7 @@ export function useNostrClient() {
     ndk: ndk.value,
     ndkStore: ndkStore.value,
     initialized: initialized.value,
+    inboxRelays: inboxRelays.value,
     subscribe,
     query,
     getSelf
