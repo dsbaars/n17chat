@@ -166,26 +166,28 @@ export const useNostrStore = defineStore('nostr', {
       return await db.events.get(id)
     },
     
-    async loadEventsFromRelays(pubkey: string) {
-      const { ndkStore, initialized } = useNostrClient()
+    // async loadEventsFromRelays(pubkey: string) {
+    //   const { ndk, ndkStore, initialized, subscribe } = useNostrClient()
       
-      if (!initialized || !ndkStore) {
-        console.warn('NDK not initialized yet')
-        return
-      }
+    //   if (!initialized || !ndkStore) {
+    //     console.warn('NDK not initialized yet')
+    //     return
+    //   }
       
-      try {
-        const sub = await ndkStore.query([{ kinds: [1059], "#p": [pubkey] }])
+    //   try {
+    //     const sub = await subscribe([{ kinds: [1059], "#p": [pubkey] }])
         
-        for await (const event of sub) {
-          if ('sig' in event && event.sig) {
-            await this.saveEvent(event)
-          }
-        }
-      } catch (error) {
-        console.error('Error loading events from relays', error)
-      }
-    },
+    //     sub.on('event', async (event) => {
+    //       if (event.rawEvent().sig) {
+    //         await this.saveEvent(event.rawEvent())
+    //       }
+    //     })
+
+       
+    //   } catch (error) {
+    //     console.error('Error loading events from relays', error)
+    //   }
+    // },
     
     async loadContactsFromDb() {
       try {

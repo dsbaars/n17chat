@@ -14,26 +14,13 @@ export default defineNuxtPlugin(async () => {
   store.setCurrentPubkey(selfPubkey)
   
   ndk?.subscribe([{
-    authors: [selfPubkey],
-    since: Math.floor(Date.now() / 1000) - 60 * 60 * 3
-  }, {
-    '#p': [selfPubkey],
-    since: Math.floor(Date.now() / 1000) - 60 * 60 * 3
-  }], {
-    closeOnEose: false
-  }, {
-    onEvent: async (event) => {
-      console.log('event', event.rawEvent())
-    }
-  })
-
-  ndk?.subscribe([{
     kinds: [1059],
     "#p": [selfPubkey]
   }], {
     closeOnEose: false
   }, {
     onEvent: async (event) => {
+      console.log('event', event.relay?.url, event.id)
       try {
         const sender = new NDKUser({
           pubkey: event.pubkey
@@ -80,6 +67,7 @@ export default defineNuxtPlugin(async () => {
       console.log('events', events)
     }
   })
+
 
     
   return {

@@ -25,11 +25,11 @@ export const useRelayStore = defineStore('relays', {
         return
       }
       
-      this.publishRelaySet = NDKRelaySet.fromRelayUrls([
-        'wss://relay.damus.io',
-        'wss://nos.lol',
-        'wss://relay.primal.net',
-      ], ndk, false)
+      // this.publishRelaySet = NDKRelaySet.fromRelayUrls([
+      //   'wss://relay.damus.io',
+      //   'wss://nos.lol',
+      //   'wss://relay.primal.net',
+      // ], ndk, false)
 
       try {
         // Get currently connected relays
@@ -42,43 +42,26 @@ export const useRelayStore = defineStore('relays', {
         if (user) {
           await user.fetchProfile()
           
-          // Clear previous relay data
-          this.readRelays = []
-          this.writeRelays = []
           this.dmRelays = []
-          
-          // // Fetch NIP-65 relay list (kind: 10002)
-          // const nip65Events = await ndk?.fetchEvents({
-          //   kinds: [10002],
-          //   authors: [user.pubkey]
-          // })
-          
-          // if (nip65Events) {
-          //   const nip65Event = Array.from(nip65Events)[0]
-          //   if (nip65Event) {
-          //     // Process relay tags
-          //     nip65Event.tags.forEach(tag => {
-          //       if (tag[0] === 'r') {
-          //         const relayUrl = tag[1]
-          //         const marker = tag[2]
-                  
-          //         if (!marker || marker === 'read') {
-          //           this.readRelays.push(relayUrl)
-          //         }
-                  
-          //         if (!marker || marker === 'write') {
-          //           this.writeRelays.push(relayUrl)
-          //         }
-          //       }
-          //     })
-          //   }
-          // }
-          
+           
+          this.publishRelaySet = NDKRelaySet.fromRelayUrls([
+            "wss://nostr-pub.wellorder.net",
+            "wss://relay.damus.io",
+            "wss://nostr.wine",
+            "wss://nos.lol",
+            "wss://nostr.mom",
+            "wss://atlas.nostr.land",
+            "wss://relay.snort.social",
+            "wss://offchain.pub",
+            "wss://relay.primal.net",
+            "wss://relay.nostr.band",
+          ], ndk, false)
+
           // Fetch DM relay list (kind: 10050) from NIP-51
           const dmRelayEvents = await ndk?.fetchEvents({
             kinds: [10050],
             authors: [user.pubkey]
-          })
+          }, { closeOnEose: true }, this.publishRelaySet)
           
           if (dmRelayEvents) {
             const dmRelayEvent = Array.from(dmRelayEvents)[0]
@@ -172,9 +155,24 @@ export const useRelayStore = defineStore('relays', {
     },
     
     async addDMRelay(relayUrl: string) {
+      
+
       if (!this.dmRelays.includes(relayUrl)) {
         const { ndk } = useNostrClient()
         const user = await ndk?.signer?.user()
+
+        this.publishRelaySet = NDKRelaySet.fromRelayUrls([
+          "wss://nostr-pub.wellorder.net",
+          "wss://relay.damus.io",
+          "wss://nostr.wine",
+          "wss://nos.lol",
+          "wss://nostr.mom",
+          "wss://atlas.nostr.land",
+          "wss://relay.snort.social",
+          "wss://offchain.pub",
+          "wss://relay.primal.net",
+          "wss://relay.nostr.band",
+        ], ndk, true)
 
         ndk?.addExplicitRelay(relayUrl, NDKRelayAuthPolicies.signIn({ndk: ndk}), true)
         
@@ -256,6 +254,19 @@ export const useRelayStore = defineStore('relays', {
       const { ndk } = useNostrClient()
       const user = await ndk?.signer?.user()
       
+      this.publishRelaySet = NDKRelaySet.fromRelayUrls([
+        "wss://nostr-pub.wellorder.net",
+        "wss://relay.damus.io",
+        "wss://nostr.wine",
+        "wss://nos.lol",
+        "wss://nostr.mom",
+        "wss://atlas.nostr.land",
+        "wss://relay.snort.social",
+        "wss://offchain.pub",
+        "wss://relay.primal.net",
+        "wss://relay.nostr.band",
+      ], ndk, true)
+
       if (user && ndk) {
         // Remove from DM relays
         this.dmRelays = this.dmRelays.filter(url => url !== relayUrl)
@@ -272,7 +283,8 @@ export const useRelayStore = defineStore('relays', {
         
         // Sign and publish the event
         await event.sign()
-        await event.publish(this.publishRelaySet)
+        const res = await event.publish(this.publishRelaySet)
+        console.log('deleteDMRelay', res)
       }
     }
   }
