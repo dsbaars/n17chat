@@ -8,20 +8,24 @@ import { ref } from 'vue'
 const ndk = ref<NDK>()
 const ndkStore = ref<NDKStore>()
 const initialized = ref(false)
-const inboxRelays = ref<string[]>([])
-
-
+const metadataNdk = ref<NDK>()
+const initializing = ref(false)
 
 // Create a function to initialize NDK
 export async function initializeNDK() {
-  if (initialized.value) return { ndk: ndk.value, ndkStore: ndkStore.value }
-  
+  if (initialized.value) return { ndk: ndk.value, metadataNdk: metadataNdk.value, ndkStore: ndkStore.value, initializing: initializing.value }
+  if (initializing.value) return { ndk: ndk.value, metadataNdk: metadataNdk.value, ndkStore: ndkStore.value, initializing: initializing.value }
+
+  initializing.value = true
   const cacheAdapter = new NDKCacheAdapterDexie({ dbName: 'ndk-cache' })
-  
+
   const signer = new NDKNip07Signer();
   const pubkey = (await signer.user()).pubkey
 
-  const bootstrapNdk = new NDK({
+
+
+  const metadataNdkInstance = new NDK({
+    signer: new NDKNip07Signer(),
     explicitRelayUrls: [
       "wss://nostr-pub.wellorder.net",
       "wss://relay.damus.io",
@@ -34,40 +38,37 @@ export async function initializeNDK() {
       "wss://relay.primal.net",
       "wss://relay.nostr.band",
     ],
-    autoConnectUserRelays: false, // don't connect to user's relays automatically as these are only for publishing
+    cacheAdapter,
+    autoConnectUserRelays: true, 
   })
 
-  await bootstrapNdk.connect()
+ 
+
+  await metadataNdkInstance.connect(1000)
+
+  console.log('Connected to metadata NDK')
 
   const filter = {
     kinds: [10050],
     authors: [pubkey]
   };
 
-  const inboxRelaysEvent = await bootstrapNdk.fetchEvent(filter, { dontSaveToCache: true })
+  const inboxRelaysEvent = await metadataNdkInstance.fetchEvent(filter, { dontSaveToCache: true })
 
-  inboxRelays.value = inboxRelaysEvent?.getMatchingTags('relay').map(r => r[1]) ?? []
+  const inboxRelays = inboxRelaysEvent?.getMatchingTags('relay').map(r => r[1]) ?? []
   
-  for (const relay of bootstrapNdk.pool.connectedRelays()) {
-    relay.disconnect()
-  }
+  // for (const relay of metadataNdk.pool.connectedRelays()) {
+  //   relay.disconnect()
+  // }
   
   const ndkInstance = new NDK({
     signer: new NDKNip07Signer(),
-    explicitRelayUrls: inboxRelays.value,
+    explicitRelayUrls: inboxRelays,
     autoConnectUserRelays: false, // don't connect to user's relays automatically as these are only for publishing
     cacheAdapter
   })
 
   ndkInstance.relayAuthDefaultPolicy = NDKRelayAuthPolicies.signIn({ndk: ndkInstance})
-
-  // ndkInstance.pool.on('relay:connect', (relay: NDKRelay) => {
-  //   console.log('relay:connected', relay.url)
-  // })
-
-  // ndkInstance.pool.on('relay:disconnect', (relay: NDKRelay) => {
-  //   console.log('relay:disconnect', relay.url)
-  // })
 
   ndkInstance.pool.on('relay:auth', (relay: NDKRelay, auth) => {
     console.log('relay:auth', relay.url, auth)
@@ -93,11 +94,15 @@ export async function initializeNDK() {
   // Set the refs
   ndk.value = ndkInstance
   ndkStore.value = ndkStoreInstance
+  metadataNdk.value = metadataNdkInstance
   initialized.value = true
-  
+  initializing.value = false
+  console.log('Initialized NDK')
+
   return {
     ndk: ndk.value,
-    ndkStore: ndkStore.value
+    ndkStore: ndkStore.value,
+    metadataNdk: metadataNdk.value
   }
 }
 
@@ -133,13 +138,23 @@ export function useNostrClient() {
     return ndk.value.signer?.user()
   }
 
+  function getNdk() {
+    return ndk.value
+  }
+
+  function getMetadataNdk() {
+    return metadataNdk.value
+  }
+
   return {
     ndk: ndk.value,
-    ndkStore: ndkStore.value,
+    metadataNdk: metadataNdk.value,
     initialized: initialized.value,
-    inboxRelays: inboxRelays.value,
+    initializing: initializing.value,
     subscribe,
     query,
-    getSelf
+    getSelf,
+    getNdk,
+    getMetadataNdk
   }
 } 

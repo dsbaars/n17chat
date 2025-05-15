@@ -217,10 +217,10 @@ export const useNostrStore = defineStore('nostr', {
     
     async updateContactProfile(pubkey: string) {
       try {
-        const { ndk } = useNostrClient()
-        if (!ndk) return null
+        const { metadataNdk } = useNostrClient()
+        if (!metadataNdk) return null
         
-        const profile = { ...(await ndk.getUser({ pubkey }).fetchProfile()) }
+        const profile = { ...(await metadataNdk.getUser({ pubkey }).fetchProfile()) }
 
         if (!profile) return null
         
@@ -276,7 +276,7 @@ export const useNostrStore = defineStore('nostr', {
       
       const contacts: Contact[] = []
 
-      const { ndk } = useNostrClient()
+      const { metadataNdk } = useNostrClient()
       
       for (const pubkey of uniquePubkeys as string[]) {
         // First check if the contact already exists in the contacts table
@@ -303,7 +303,7 @@ export const useNostrStore = defineStore('nostr', {
             
             // Try to fetch profile information
             try {
-              const profile = await ndk?.getUser({ pubkey: pubkey as string }).fetchProfile()
+              const profile = await metadataNdk?.getUser({ pubkey: pubkey as string }).fetchProfile()
               if (profile) {
                 contact.name = profile.name
                 contact.picture = profile.image
@@ -426,6 +426,7 @@ export const useNostrStore = defineStore('nostr', {
       }
     },
     sendDirectMessage(pubkey: string, message: string) {
+      console.log('Sending message to', pubkey, message)
       const { ndk } = useNostrClient()
       if (!ndk) return
       

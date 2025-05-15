@@ -8,12 +8,20 @@ const nostrStore = useNostrStore()
 const colorMode = useColorMode()
 const { ndk, initialized } = useNostrClient()
 
+const contact = ref<Contact | null>(null)
+
+watch(() => nostrStore.currentPubkey, (newPubkey) => {
+  nostrStore.updateContactProfile(newPubkey).then(() => {
+    contact.value = nostrStore.getContact(newPubkey)
+  })
+})
+
 // Safely handle possibly undefined ndk
 let pubkey = ''
 onMounted(async () => {
-  if (!initialized) {
-    await initializeNDK()
-  }
+  // if (!initialized) {
+  //   await initializeNDK()
+  // }
 
   if (ndk && ndk.signer) {
     const user = await (await ndk.signer).user()
@@ -23,7 +31,6 @@ onMounted(async () => {
   }
 })
 
-const contact = computed(() => nostrStore.getContact(pubkey))
 
 // Set theme function
 const setTheme = (theme: ThemeMode) => {
@@ -60,7 +67,7 @@ const setTheme = (theme: ThemeMode) => {
       <!-- Avatar Dropdown -->
       <div class="dropdown dropdown-end">
         <label tabindex="0" class="btn btn-ghost btn-circle avatar placeholder">
-          <div class="bg-neutral text-neutral-content rounded-full w-10">
+          <div class="bg-neutral text-neutral-content rounded-full w-10" v-if="contact?.picture">
             <img :src="contact?.picture" >
           </div>
         </label>

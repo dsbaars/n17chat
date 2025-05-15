@@ -15,7 +15,7 @@ import 'vue-json-pretty/lib/styles.css';
 import { useRelayStore } from '~/stores/relays'
 
 const nostrStore = useNostrStore()
-const { ndk } = useNostrClient()
+const { getNdk, getMetadataNdk } = useNostrClient()
 const relayStore = useRelayStore()
 const messages = ref<Message[]>([])
 const newMessage = ref('')
@@ -77,9 +77,15 @@ const scrollToBottom = () => {
 
 // Send a new message
 const sendMessage = async (message: string) => {
-  if (!message.trim() || !nostrStore.selectedContact || !ndk) return
 
-  const relays = await getInboxDMRelays(ndk, nostrStore.selectedContact.pubkey)
+  const ndk = getNdk()
+  const metadataNdk = getMetadataNdk()
+
+  if (!message.trim() || !nostrStore.selectedContact || !ndk || !metadataNdk) return
+
+  const relays = await getInboxDMRelays(metadataNdk, nostrStore.selectedContact.pubkey)
+
+  console.log('relays', relays)
 
   if (relays.length === 0) {
     alerts.value.push({
@@ -152,18 +158,29 @@ const closeModal = () => {
   isModalOpen.value = false
 }
 
-// const backdrop = () => {
-//   return nostrStore.selectedContact?.profile?.banner || ""
-// }
+const initializing = ref(false)
 
-onMounted(async () => {
-  await relayStore.fetchRelayInfo()
-  if (relayStore.dmRelays.length === 0) {
+watch(() => useNostrClient().initializing, (newInitializing) => {
+  initializing.value = newInitializing
+})
+
+watch(() => relayStore.dmRelays.length, (newLength) => {
+  if (newLength === 0) {
     alerts.value.push({
       type: 'warning',
       message: 'No DM relays found. Please add them in settings.'
     })
+  } else {
+    // Remove the warning alert if it exists
+    alerts.value = alerts.value.filter(alert => 
+      !(alert.type === 'warning' && alert.message.includes('No DM relays found'))
+    )
   }
+})
+
+
+onMounted(async () => {
+
 })
 </script>
 
@@ -187,7 +204,8 @@ onMounted(async () => {
             </label>
             <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-200 rounded-box z-[1]  p-2 shadow-xl">
               <li><a @click="() => openModal(nostrStore.selectedContact)">View profile</a></li>
-              <li v-for="client in getClientLinks(nostrStore.selectedContact.pubkey)" :key="client.name"><a :href="client.url" target="_blank">{{ client.name }}</a></li>
+              <li v-for="client in getClientLinks(nostrStore.selectedContact.pubkey)" :key="client.name"><a
+                  :href="client.url" target="_blank">{{ client.name }}</a></li>
             </ul>
           </div>
 
@@ -201,8 +219,15 @@ onMounted(async () => {
     <!-- Messages area -->
 
     <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 bg-base-200">
+
       <div v-if="!nostrStore.selectedContact" class="h-full flex items-center justify-center text-lg opacity-50">
-        Select a conversation to start chatting
+        <div v-if="initializing" class="text-sm opacity-50">
+          <span class="loading loading-spinner loading-lg"/>
+          Initializing...
+        </div>
+        <div v-else>
+          Select a conversation to start chatting
+        </div>
       </div>
 
       <template v-else>
@@ -218,7 +243,8 @@ onMounted(async () => {
     </div>
 
     <!-- Message input -->
-    <div v-if="relayStore.dmRelays.length > 0 && nostrStore.selectedContact" class="border-t border-base-300 p-3 bg-base-100">
+    <div v-if="relayStore.dmRelays.length > 0 && nostrStore.selectedContact"
+      class="border-t border-base-300 p-3 bg-base-100">
       <MessageInput v-model="newMessage" @send="sendMessage" />
     </div>
     <div v-else-if="relayStore.dmRelays.length === 0" class="border-t border-base-300 p-3 bg-base-100">
@@ -227,23 +253,19 @@ onMounted(async () => {
       </div>
     </div>
 
-    <AppModal 
-      v-model:is-open="isModalOpen"
-      size="xl"
-      @close="closeModal"
-    >
+    <AppModal v-model:is-open="isModalOpen" size="xl" @close="closeModal">
       <template #header>
         <h3 class="font-bold text-lg">Raw Message</h3>
       </template>
-      
+
       <vue-json-pretty :data="modalContent" :deep="3" />
-      
+
       <template #footer>
         <button class="btn btn-outline" @click="closeModal">Close</button>
       </template>
     </AppModal>
 
-    <div v-if="alerts.length > 0" role="" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-100" >
+    <div v-if="alerts.length > 0" role="" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-100">
       <Alert v-for="alert in alerts" :key="alert.message" :type="alert.type" :message="alert.message" closable />
     </div>
   </div>

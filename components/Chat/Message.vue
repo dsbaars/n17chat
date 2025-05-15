@@ -33,7 +33,7 @@ const formatMessageTime = (timestamp: number) => {
 }
 
 // Check if message is from the current user
-const isCurrentUser = (message: ExtendedMessage) => {
+const isCurrentUser = (message: Message) => {
   // If the message has isSent flag set, it was sent by the current user
   if ('isSent' in message && message.isSent) return true
 
@@ -41,7 +41,7 @@ const isCurrentUser = (message: ExtendedMessage) => {
   return message.pubkey === nostrStore.currentPubkey
 }
 
-const decryptImageContent = async (content: ExtendedMessage) => {
+const decryptImageContent = async (content: Message) => {
   const fileType = content.tags.find((t: string[]) => t[0] === 'file-type')?.[1]
   if (!fileType) return
 

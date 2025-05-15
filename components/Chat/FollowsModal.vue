@@ -5,7 +5,7 @@ import { getFollows } from '~/utils/nipHelpers'
 import { useNostrClient } from '~/composables/useNostrClient'
 import ContactPicture from '~/components/Chat/ContactPicture.vue'
 
-defineProps({
+const props = defineProps({
   isOpen: {
     type: Boolean,
     required: true
@@ -18,6 +18,8 @@ const followedUsers = ref([])
 const loading = ref(true)
 const nostrStore = useNostrStore()
 const searchTerm = ref('')
+const progress = ref(0)
+const progressMax = ref(0)
 
 // Filtered users based on search term
 const filteredUsers = computed(() => {
@@ -30,18 +32,25 @@ const filteredUsers = computed(() => {
   })
 })
 
+watch(() => props.isOpen, async (newIsOpen) => {
+  if (newIsOpen) {
+    await loadFollows()
+  }
+})
+
 // Load follows when component is mounted
 onMounted(async () => {
-  await loadFollows()
+  // console.log('FollowsModal mounted')
+  // await loadFollows()
 })
 
 async function loadFollows() {
   loading.value = true
   try {
-    const { ndk } = useNostrClient()
-    if (!ndk) return
+    const { metadataNdk } = useNostrClient()
+    if (!metadataNdk) return
     
-    const signer = await ndk.signer
+    const signer = await metadataNdk.signer
     const user = await signer?.user()
     
     if (!user) {
@@ -50,12 +59,19 @@ async function loadFollows() {
       return
     }
     
-    const follows = await getFollows(ndk, user.pubkey)
+    const follows = await getFollows(metadataNdk, user.pubkey)
+    console.log('follows', follows)
+    if (!follows) {
+      loading.value = false
+      return
+    }
 
     // Convert follows into a format suitable for display
     const users = []
+    progressMax.value = (follows as Set<string>).size
     for (const pubkey of follows) {
-      const profile = await ndk.getUser({ pubkey }).fetchProfile()
+      progress.value++
+      const profile = await metadataNdk.getUser({ pubkey }).fetchProfile()
 
       users.push({
         pubkey,
@@ -103,8 +119,15 @@ function closeModal() {
       </div>
       
       <!-- Loading indicator -->
-      <div v-if="loading" class="flex justify-center py-8">
-        <span class="loading loading-spinner loading-lg"/>
+      <div v-if="loading" class="flex justify-center py-8 flex-col">
+        <div class="flex flex-col items-center">
+          <span class="loading loading-spinner loading-lg"/>
+          <span class="text-sm text-base-content/60">Loading follows...</span>
+        </div>
+        <div class="flex flex-col items-center mt-5">
+          <progress class="progress progress-accent w-56" :value="progress" :max="progressMax"></progress>
+          <span class="text-sm text-base-content/60">{{ progress }} / {{ progressMax }}</span>
+        </div>
       </div>
       
       <!-- Follows list -->

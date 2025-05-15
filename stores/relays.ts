@@ -19,49 +19,30 @@ export const useRelayStore = defineStore('relays', {
     async fetchRelayInfo() {
       if (this.isLoaded) return
       this.isLoading = true
-      const { ndk } = useNostrClient()
+      const { metadataNdk } = useNostrClient()
 
-      if (!ndk) {
+      if (!metadataNdk) {
         return
       }
       
-      // this.publishRelaySet = NDKRelaySet.fromRelayUrls([
-      //   'wss://relay.damus.io',
-      //   'wss://nos.lol',
-      //   'wss://relay.primal.net',
-      // ], ndk, false)
-
       try {
         // Get currently connected relays
-        if (ndk?.pool?.relays) {
-          this.connectedRelays = Array.from(ndk.pool.relays.keys())
+        if (metadataNdk?.pool?.relays) {
+          this.connectedRelays = Array.from(metadataNdk.pool.relays.keys())
         }
         
         // Get user from signer
-        const user = await ndk?.signer?.user()
+        const user = await metadataNdk?.signer?.user()
         if (user) {
           await user.fetchProfile()
           
           this.dmRelays = []
            
-          this.publishRelaySet = NDKRelaySet.fromRelayUrls([
-            "wss://nostr-pub.wellorder.net",
-            "wss://relay.damus.io",
-            "wss://nostr.wine",
-            "wss://nos.lol",
-            "wss://nostr.mom",
-            "wss://atlas.nostr.land",
-            "wss://relay.snort.social",
-            "wss://offchain.pub",
-            "wss://relay.primal.net",
-            "wss://relay.nostr.band",
-          ], ndk, false)
-
           // Fetch DM relay list (kind: 10050) from NIP-51
-          const dmRelayEvents = await ndk?.fetchEvents({
+          const dmRelayEvents = await metadataNdk?.fetchEvents({
             kinds: [10050],
             authors: [user.pubkey]
-          }, { closeOnEose: true }, this.publishRelaySet)
+          }, { closeOnEose: true })
           
           if (dmRelayEvents) {
             const dmRelayEvent = Array.from(dmRelayEvents)[0]
@@ -97,88 +78,17 @@ export const useRelayStore = defineStore('relays', {
       
       return ndk.pool.isRelayConnected(relayUrl)
     },
-    
-    async addReadRelay(relayUrl: string) {
-      if (!this.readRelays.includes(relayUrl)) {
-        const { ndk } = useNostrClient()
-        const user = await ndk?.signer?.user()
-        
-        if (user && ndk) {
-          // Create or update NIP-65 event
-          const event = new NDKEvent(ndk, {
-            kind: 10002,
-            content: '',
-            tags: [
-              ...this.readRelays.map(url => ['r', url, 'read']),
-              ...this.writeRelays.filter(url => !this.readRelays.includes(url)).map(url => ['r', url, 'write']),
-              ['r', relayUrl, 'read']
-            ],
-            created_at: Math.floor(Date.now() / 1000)
-          })
-          
-          // Sign and publish the event
-          await event.sign()
-          await event.publish()
-          
-          // Update local state
-          this.readRelays.push(relayUrl)
-        }
-      }
-    },
-    
-    async addWriteRelay(relayUrl: string) {
-      if (!this.writeRelays.includes(relayUrl)) {
-        const { ndk } = useNostrClient()
-        const user = await ndk?.signer?.user()
-        
-        if (user && ndk) {
-          // Create or update NIP-65 event
-          const event = new NDKEvent(ndk, {
-            kind: 10002,
-            content: '',
-            tags: [
-              ...this.readRelays.filter(url => !this.writeRelays.includes(url)).map(url => ['r', url, 'read']),
-              ...this.writeRelays.map(url => ['r', url, 'write']),
-              ['r', relayUrl, 'write']
-            ],
-            created_at: Math.floor(Date.now() / 1000)
-          })
-          
-          // Sign and publish the event
-          await event.sign()
-          await event.publish()
-          
-          // Update local state
-          this.writeRelays.push(relayUrl)
-        }
-      }
-    },
-    
+      
     async addDMRelay(relayUrl: string) {
       
 
       if (!this.dmRelays.includes(relayUrl)) {
-        const { ndk } = useNostrClient()
-        const user = await ndk?.signer?.user()
-
-        this.publishRelaySet = NDKRelaySet.fromRelayUrls([
-          "wss://nostr-pub.wellorder.net",
-          "wss://relay.damus.io",
-          "wss://nostr.wine",
-          "wss://nos.lol",
-          "wss://nostr.mom",
-          "wss://atlas.nostr.land",
-          "wss://relay.snort.social",
-          "wss://offchain.pub",
-          "wss://relay.primal.net",
-          "wss://relay.nostr.band",
-        ], ndk, true)
-
-        ndk?.addExplicitRelay(relayUrl, NDKRelayAuthPolicies.signIn({ndk: ndk}), true)
+        const { metadataNdk } = useNostrClient()
+        const user = await metadataNdk?.signer?.user()
         
-        if (user && ndk) {
+        if (user && metadataNdk) {
           // Create or update NIP-51 DM relay event
-          const event = new NDKEvent(ndk, {
+          const event = new NDKEvent(metadataNdk, {
             kind: 10050,
             content: '',
             tags: [
@@ -192,67 +102,17 @@ export const useRelayStore = defineStore('relays', {
 
           // Sign and publish the event
           await event.sign()
-          await event.publish(this.publishRelaySet)
+          await event.publish()
           
           // Update local state
           this.dmRelays.push(relayUrl)
         }
       }
     },
-    
-    async deleteReadRelay(relayUrl: string) {
-      const { ndk } = useNostrClient()
-      const user = await ndk?.signer?.user()
-      
-      if (user && ndk) {
-        // Remove from read relays
-        this.readRelays = this.readRelays.filter(url => url !== relayUrl)
-        
-        // Create or update NIP-65 event
-        const event = new NDKEvent(ndk, {
-          kind: 10002,
-          content: '',
-          tags: [
-            ...this.readRelays.map(url => ['r', url, 'read']),
-            ...this.writeRelays.filter(url => !this.readRelays.includes(url)).map(url => ['r', url, 'write'])
-          ],
-          created_at: Math.floor(Date.now() / 1000)
-        })
-        
-        // Sign and publish the event
-        await event.sign()
-        await event.publish()
-      }
-    },
-    
-    async deleteWriteRelay(relayUrl: string) {
-      const { ndk } = useNostrClient()
-      const user = await ndk?.signer?.user()
-      
-      if (user && ndk) {
-        // Remove from write relays
-        this.writeRelays = this.writeRelays.filter(url => url !== relayUrl)
-        
-        // Create or update NIP-65 event
-        const event = new NDKEvent(ndk, {
-          kind: 10002,
-          content: '',
-          tags: [
-            ...this.readRelays.filter(url => !this.writeRelays.includes(url)).map(url => ['r', url, 'read']),
-            ...this.writeRelays.map(url => ['r', url, 'write'])
-          ],
-          created_at: Math.floor(Date.now() / 1000)
-        })
-        
-        // Sign and publish the event
-        await event.sign()
-        await event.publish()
-      }
-    },
-    
+     
     async deleteDMRelay(relayUrl: string) {
-      const { ndk } = useNostrClient()
-      const user = await ndk?.signer?.user()
+      const { ndk, metadataNdk } = useNostrClient()
+      const user = await metadataNdk?.signer?.user()
       
       this.publishRelaySet = NDKRelaySet.fromRelayUrls([
         "wss://nostr-pub.wellorder.net",
@@ -265,16 +125,16 @@ export const useRelayStore = defineStore('relays', {
         "wss://offchain.pub",
         "wss://relay.primal.net",
         "wss://relay.nostr.band",
-      ], ndk, true)
+      ], metadataNdk, true)
 
-      if (user && ndk) {
+      if (user && metadataNdk) {
         // Remove from DM relays
         this.dmRelays = this.dmRelays.filter(url => url !== relayUrl)
         
         ndk?.pool.removeRelay(relayUrl);
 
         // Create or update NIP-51 DM relay event
-        const event = new NDKEvent(ndk, {
+        const event = new NDKEvent(metadataNdk, {
           kind: 10050,
           content: '',
           tags: this.dmRelays.map(url => ['relay', url]),
@@ -283,7 +143,7 @@ export const useRelayStore = defineStore('relays', {
         
         // Sign and publish the event
         await event.sign()
-        const res = await event.publish(this.publishRelaySet)
+        const res = await event.publish()
         console.log('deleteDMRelay', res)
       }
     }
