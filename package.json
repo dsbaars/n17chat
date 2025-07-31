@@ -29,7 +29,7 @@
     "ndk": "link:jsr:@nostrify/ndk",
     "nostr-tools": "^2.15.2",
     "nostrify": "link:jsr:@nostrify/nostrify",
-    "nuxt": "^3.17.3",
+    "nuxt": "^4.0.2",
     "nuxt-workers": "0.1.0",
     "pinia": "^3.0.3",
     "tailwindcss": "^4.1.11",
