@@ -19,7 +19,14 @@ export async function initializeNDK() {
   initializing.value = true
   const cacheAdapter = new NDKCacheAdapterDexie({ dbName: 'ndk-cache' })
 
-  const signer = new NDKNip07Signer();
+  let signer: NDKNip07Signer | null = null
+  try {
+    signer = new NDKNip07Signer();
+  } catch (e) {
+    console.error('Failed to create signer', e)
+    return
+  }
+
   const pubkey = (await signer.user()).pubkey
 
 

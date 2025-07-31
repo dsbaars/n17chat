@@ -210,6 +210,9 @@ const getSubject = () => {
       <section v-if="message.kind == 15">
         <img :src="imageUrl" class="w-96 h-auto object-cover" alt="Encrypted image">
       </section>
+      <section v-else-if="message.kind == 444">
+        <code>(Welcome Event for MLS)</code>
+      </section>
       <section v-else>
         <div v-if="message.tags.some((t: string[]) => t[0] === 'e' && t.length > 1)" class="mb-2 text-xs">
           <template v-if="message.tags.find((t: string[]) => t[0] === 'e')">
@@ -254,6 +257,7 @@ const getSubject = () => {
     <div class="chat-footer opacity-50 text-xs">
       <a @click="openModal">View event</a> - 
       {{ formatMessageTime(message.created_at) }}
+      <span v-if="message.kind != 14 && message.kind != 15">- (kind: {{ message.kind }})</span>
     </div>
   </div>
 </template>

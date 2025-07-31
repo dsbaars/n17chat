@@ -36,6 +36,19 @@ npm run build
 
 The app requires a Nostr extension like nos2x or Alby to be installed in the browser to function properly. This allows the app to request the user's public key and to sign events.
 
+### Nostr Extension Required
+
+n17.chat requires a NIP-07 compatible Nostr extension to function. If no extension is detected, users will be automatically redirected to `/no-extension` which provides:
+
+- Explanation of what NIP-07 is and why it's needed
+- List of popular Nostr extensions with download links
+- Step-by-step installation instructions
+- Real-time extension detection with refresh capability
+
+Popular extensions include:
+- **nos2x** - Chrome/Firefox extension
+- **Alby** - Bitcoin Lightning wallet with Nostr support
+
 ## Development
 
 ### Architecture

@@ -11,7 +11,9 @@ useHead({
 })
 
 onMounted(async () => {
-  await subscribeEvents()
+  if (typeof window !== "undefined" && "nostr" in window) {
+    await subscribeEvents()
+  } 
 })
 </script>
 

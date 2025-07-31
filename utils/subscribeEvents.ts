@@ -5,6 +5,9 @@ import { useRelayStore } from "~/stores/relays"
 
 export async function subscribeEvents() {
   const { ndk, metadataNdk } = await initializeNDK()
+
+
+
   const follows = await getFollows(metadataNdk, (await metadataNdk?.signer?.user())?.pubkey)
 
   // Initialize store and fetch initial data
