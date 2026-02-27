@@ -34,16 +34,16 @@ export async function initializeNDK() {
   const metadataNdkInstance = new NDK({
     signer: new NDKNip07Signer(),
     explicitRelayUrls: [
-      "wss://nostr-pub.wellorder.net",
+      // "wss://nostr-pub.wellorder.net",
       "wss://relay.damus.io",
       "wss://nostr.wine",
       "wss://nos.lol",
       "wss://nostr.mom",
-      "wss://atlas.nostr.land",
-      "wss://relay.snort.social",
-      "wss://offchain.pub",
+      // "wss://atlas.nostr.land",
+      // "wss://relay.snort.social",
+      // "wss://offchain.pub",
       "wss://relay.primal.net",
-      "wss://relay.nostr.band",
+      // "wss://relay.nostr.band",
     ],
     cacheAdapter,
     autoConnectUserRelays: true, 
@@ -86,7 +86,7 @@ export async function initializeNDK() {
     console.log('relay:authed', relay.url)
   })
     
-  await ndkInstance.connect()
+  await ndkInstance.connect(1000)
   
   const self = await ndkInstance.signer?.user()
 
@@ -97,6 +97,7 @@ export async function initializeNDK() {
 
   // Initialize the NDK store
   const ndkStoreInstance = new NDKStore(ndkInstance)
+  console.log('ndkStoreInstance', ndkStoreInstance)
 
   // Set the refs
   ndk.value = ndkInstance
@@ -121,6 +122,7 @@ export function useNostrClient() {
   
   // Subscribe to events with a filter
   function subscribe(filter: any) {
+    console.log('subscribe', filter)
     if (!ndk.value) {
       console.error('NDK not initialized')
       return
